@@ -1,7 +1,10 @@
 package com.sprint.mission;
 
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.service.jcf.JCFChannelService;
 import com.sprint.mission.discodeit.service.jcf.JCFUserService;
 
 import java.util.UUID;
@@ -9,6 +12,11 @@ import java.util.UUID;
 public class JavaApplication {
 
     public static void main(String[] args) {
+
+        // USERSERVICE CRUD TESTING.
+        System.out.println("==============================");
+        System.out.println("USER CRUD TESTING");
+        System.out.println("==============================");
 
         UserService userService = new JCFUserService();
 
@@ -42,6 +50,47 @@ public class JavaApplication {
         userService.delete(userId);
         // [ ] 조회를 통해 삭제되었는지 확인
         System.out.println("delete check: " + userService.findById(userId));
+
+        //
+        // CHANNEL CRUD TESTING.
+        System.out.println("==============================");
+        System.out.println("CHANNEL CRUD TESTING.");
+        System.out.println("==============================");
+
+        ChannelService channelService = new JCFChannelService();
+
+        Channel channel = new Channel(
+                "notice channel",
+                "Notice uploading Channel"
+        );
+
+        // create
+        channelService.create(channel);
+        UUID channelId = channel.getId();
+
+        // Read
+        System.out.println("channel read: " + channelService.findById(channelId).getName());
+
+        // ReadAll
+        System.out.println("channel count: " + channelService.findAll().size());
+
+        Channel updatedChannel = new Channel(
+                "Casual Channel",
+                "Casual Chatting Channel"
+        );
+        channelService.update(channelId, updatedChannel);
+        System.out.println("update channel check: " + channelService.findById(channelId).getName());
+
+        // delete
+        channelService.delete(channelId);
+        System.out.println("delete channel check: " + channelService.findById(channelId));
+        System.out.println("channel count: " + channelService.findAll().size());
+
+        //
+        // Message CRUD TESTING.
+        System.out.println("==============================");
+        System.out.println("MESSAGE CRUD TESTING.");
+        System.out.println("==============================");
 
 
 
