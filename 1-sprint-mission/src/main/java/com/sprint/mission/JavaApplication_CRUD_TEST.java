@@ -12,7 +12,7 @@ import com.sprint.mission.discodeit.service.jcf.JCFUserService;
 
 import java.util.UUID;
 
-public class JavaApplication {
+public class JavaApplication_CRUD_TEST {
 
     public static void main(String[] args) {
 
@@ -78,8 +78,6 @@ public class JavaApplication {
 
         // Read
         System.out.println("channel read: " + channelService.findById(channelId).getName());
-
-        // ReadAll
         System.out.println("channel count: " + channelService.findAll().size());
 
         Channel updatedChannel = new Channel(
@@ -104,7 +102,10 @@ public class JavaApplication {
         System.out.println("MESSAGE CRUD TESTING.");
         System.out.println("==============================");
 
-        MessageService messageService = new JCFMessageService();
+        MessageService messageService = new JCFMessageService(
+                userService,
+                channelService
+        );
 
         Message message = new Message(
                 "first message",
@@ -141,6 +142,6 @@ public class JavaApplication {
                 deletedMessage == null ? "message 삭제 완료" : "message 삭제 실패"
         );
         System.out.println("message count: " + messageService.findAll().size());
-        
+
     }
 }
