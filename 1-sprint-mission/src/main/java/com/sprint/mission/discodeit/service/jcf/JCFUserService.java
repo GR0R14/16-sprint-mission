@@ -1,0 +1,59 @@
+package com.sprint.mission.discodeit.service.jcf;
+
+import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.service.UserService;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+public class JCFUserService implements UserService {
+
+    // Map<K,V>
+    private final Map<UUID, User> data;
+
+    public JCFUserService() {
+        this.data = new HashMap<>();
+}
+
+    // 사용자 생성
+    @Override
+    public void create(User user) {
+        data.put(user.getId(), user);
+    }
+
+    // 한명 조회
+    @Override
+    public User findById(UUID id) {
+        return data.get(id); // 값 없으면 null 반환
+    }
+
+    // 전체 조회
+    @Override
+    public List<User> findAll() {
+        return List.copyOf(data.values()); // 결과를 수정할 수 없는 리스트로 반환
+    }
+
+    // update
+    @Override
+    public void update(UUID id, User user) {
+        User existingUser = data.get(id);
+
+        if (existingUser == null) {
+            throw new IllegalArgumentException("존재하지 않는 사용자입니다: " + id);
+        }
+
+        existingUser.update(
+                user.getUsername(),
+                user.getEmail(),
+                user.getPassword()
+        );
+    }
+
+    // 사용자 삭제
+    @Override
+    public void delete(UUID id) {
+        data.remove(id);
+    }
+}
