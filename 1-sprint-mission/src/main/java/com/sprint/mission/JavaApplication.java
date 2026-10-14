@@ -1,10 +1,13 @@
 package com.sprint.mission;
 
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.service.ChannelService;
+import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.jcf.JCFChannelService;
+import com.sprint.mission.discodeit.service.jcf.JCFMessageService;
 import com.sprint.mission.discodeit.service.jcf.JCFUserService;
 
 import java.util.UUID;
@@ -49,7 +52,12 @@ public class JavaApplication {
         // [ ] 삭제
         userService.delete(userId);
         // [ ] 조회를 통해 삭제되었는지 확인
-        System.out.println("delete check: " + userService.findById(userId));
+        User deletedUser = userService.findById(userId);
+        System.out.println(
+                deletedUser == null ? "user 삭제 완료" : "user 삭제 실패"
+        );
+        System.out.println("user count: " + userService.findAll().size());
+
 
         //
         // CHANNEL CRUD TESTING.
@@ -83,8 +91,12 @@ public class JavaApplication {
 
         // delete
         channelService.delete(channelId);
-        System.out.println("delete channel check: " + channelService.findById(channelId));
+        Channel deletedChannel = channelService.findById(channelId);
+        System.out.println(
+                deletedChannel == null ? "channel 삭제 완료" : "channel 삭제 실패"
+        );
         System.out.println("channel count: " + channelService.findAll().size());
+
 
         //
         // Message CRUD TESTING.
@@ -92,9 +104,43 @@ public class JavaApplication {
         System.out.println("MESSAGE CRUD TESTING.");
         System.out.println("==============================");
 
+        MessageService messageService = new JCFMessageService();
 
+        Message message = new Message(
+                "first message",
+                userId,
+                channelId
+        );
 
+        // create
+        messageService.create(message);
+        UUID messageId = message.getId();
 
+        // read
+        System.out.println("message: " + messageService.findById(messageId).getContent());
 
+        // readAll
+        System.out.println("message count: " + messageService.findAll().size());
+
+        // update
+        Message updatedMessage = new Message(
+                "updated meessage",
+                userId,
+                channelId
+        );
+        messageService.update(messageId, updatedMessage);
+
+        System.out.println("message update: " + messageService.findById(messageId).getContent());
+
+        // delete
+        messageService.delete(messageId);
+
+        Message deletedMessage = messageService.findById(messageId);
+
+        System.out.println(
+                deletedMessage == null ? "message 삭제 완료" : "message 삭제 실패"
+        );
+        System.out.println("message count: " + messageService.findAll().size());
+        
     }
 }
