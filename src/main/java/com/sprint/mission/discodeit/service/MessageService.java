@@ -18,4 +18,5 @@ public interface MessageService {
     void update(UUID id, String content);
 
     void delete(UUID id);
+
 }

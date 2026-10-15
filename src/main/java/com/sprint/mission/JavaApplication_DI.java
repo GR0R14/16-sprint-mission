@@ -145,15 +145,33 @@ public class JavaApplication_DI {
                 .anyMatch(savedMessage -> savedMessage.getId().equals(message.getId()));
         System.out.println("Message 삭제: " + !messageStillExists);
 
-        userService.delete(user.getId());
-        boolean userStillExists = userService.findAll().stream()
-                .anyMatch(savedUser -> savedUser.getId().equals(user.getId()));
-        System.out.println("User 삭제: " + !userStillExists);
+        // User 연쇄 삭제 확인용 메시지
+        Message messageForUserDelete = new Message(
+                "message for user delete test",
+                user.getId(),
+                channel.getId()
+        );
+        messageService.create(messageForUserDelete);
 
-        channelService.delete(channel.getId());
-        boolean channelStillExists = channelService.findAll().stream()
-                .anyMatch(savedChannel -> savedChannel.getId().equals(channel.getId()));
-        System.out.println("Channel 삭제: " + !channelStillExists);
+        boolean userAndMessagesDeleted =
+                deleteUserAndMessages(userService, messageService, user.getId());
+
+        System.out.println("User 및 연결 메시지 삭제: "
+                + (userAndMessagesDeleted ? "성공" : "실패"));
+
+        // Channel 연쇄 삭제 확인용 메시지
+        Message messageForChannelDelete = new Message(
+                "message for channel delete test",
+                secondUser.getId(),
+                channel.getId()
+        );
+        messageService.create(messageForChannelDelete);
+
+        boolean channelAndMessagesDeleted =
+                deleteChannelAndMessages(channelService, messageService, channel.getId());
+
+        System.out.println("Channel 및 연결 메시지 삭제: "
+                + (channelAndMessagesDeleted ? "성공" : "실패"));
 
     }
 
@@ -219,5 +237,51 @@ public class JavaApplication_DI {
 
         System.out.println("중복 이메일 수정 거부: "
                 + (rejected && emailUnchanged));
+    }
+
+    private static boolean deleteUserAndMessages(
+            UserService userService,
+            MessageService messageService,
+            UUID userId
+    ) {
+        userService.findById(userId);
+
+        messageService.findAll().stream()
+                .filter(message -> message.getUserId().equals(userId))
+                .map(Message::getId)
+                .toList()
+                .forEach(messageService::delete);
+
+        userService.delete(userId);
+
+        boolean userStillExists = userService.findAll().stream()
+                .anyMatch(user -> user.getId().equals(userId));
+        boolean userMessageStillExists = messageService.findAll().stream()
+                .anyMatch(message -> message.getUserId().equals(userId));
+
+        return !userStillExists && !userMessageStillExists;
+    }
+
+    private static boolean deleteChannelAndMessages(
+            ChannelService channelService,
+            MessageService messageService,
+            UUID channelId
+    ) {
+        channelService.findById(channelId);
+
+        messageService.findAll().stream()
+                .filter(message -> message.getChannelId().equals(channelId))
+                .map(Message::getId)
+                .toList()
+                .forEach(messageService::delete);
+
+        channelService.delete(channelId);
+
+        boolean channelStillExists = channelService.findAll().stream()
+                .anyMatch(channel -> channel.getId().equals(channelId));
+        boolean channelMessageStillExists = messageService.findAll().stream()
+                .anyMatch(message -> message.getChannelId().equals(channelId));
+
+        return !channelStillExists && !channelMessageStillExists;
     }
 }
