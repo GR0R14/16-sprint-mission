@@ -64,6 +64,11 @@ public class JCFChannelService implements ChannelService {
     // 채널 삭제
     @Override
     public void delete(UUID id) {
-        data.remove(id);
+        Channel removedChannel = data.remove(id);
+        if (removedChannel == null) {
+            throw new IllegalArgumentException(
+                    "Not Found channel id: " + id
+            );
+        }
     }
 }

@@ -20,6 +20,13 @@ public class JCFUserService implements UserService {
     // 사용자 생성
     @Override
     public void create(User user) {
+
+        if (isEmailDuplicate(user.getEmail(), null)) {
+            throw new IllegalArgumentException(
+                    "Email is already in use." + user.getEmail()
+            );
+        }
+
         data.put(user.getId(), user);
     }
 
@@ -49,7 +56,15 @@ public class JCFUserService implements UserService {
         User existingUser = data.get(id);
 
         if (existingUser == null) {
-            throw new IllegalArgumentException("Not Found User: " + id);
+            throw new IllegalArgumentException(
+                    "Not Found User: " + id
+            );
+        }
+
+        if (isEmailDuplicate(user.getEmail(), id)) {
+            throw new IllegalArgumentException(
+                    "Email is already in use." + user.getEmail()
+            );
         }
 
         existingUser.update(
@@ -62,6 +77,35 @@ public class JCFUserService implements UserService {
     // 사용자 삭제
     @Override
     public void delete(UUID id) {
-        data.remove(id);
+        User removedUser = data.remove(id);
+        if (removedUser == null) {
+            throw new IllegalArgumentException(
+                    "Not Found User: " + id
+            );
+        }
     }
+
+    // 이메일 중복 검사 메서드 추가
+    private boolean isEmailDuplicate(String email, UUID excludUserId) {
+        return data.values().stream()
+                .anyMatch(user ->
+                        user.getEmail().equalsIgnoreCase(email)
+                                && !user.getId().equals(excludUserId)
+                );
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
