@@ -20,7 +20,6 @@ public class JCFUserService implements UserService {
     // 사용자 생성
     @Override
     public void create(User user) {
-
         if (isEmailDuplicate(user.getEmail(), null)) {
             throw new IllegalArgumentException(
                     "Email is already in use." + user.getEmail()
