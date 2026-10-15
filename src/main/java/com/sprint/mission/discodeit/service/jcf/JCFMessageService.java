@@ -30,6 +30,10 @@ public class JCFMessageService implements MessageService {
     // Create
     @Override
     public void create(Message message) {
+        if (data.containsKey(message.getId())) {
+            throw new IllegalArgumentException("이미 등록된 ID입니다: " + message.getId());
+        }
+
         // User, Channel 조회
         User user = userService.findById(message.getUserId());
         Channel channel = channelService.findById(message.getChannelId());

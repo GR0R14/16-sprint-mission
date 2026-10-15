@@ -21,6 +21,10 @@ public class JCFChannelService implements ChannelService {
     // 채널 생성
     @Override
     public void create(Channel channel) {
+        if (data.containsKey(channel.getId())) {
+            throw new IllegalArgumentException("이미 등록된 ID입니다: " + channel.getId());
+        }
+
         data.put(channel.getId(), channel);
     }
 
