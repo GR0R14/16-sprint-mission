@@ -38,6 +38,34 @@ public class JavaApplication_DI {
         userService.update(user.getId(), updatedUser);
         System.out.println("User update: " + userService.findById(user.getId()).getUsername());
 
+        // 이메일 생성 중복 검증
+        User duplicateEmailUser = new User(
+                "another tester",
+                "tester@example.com", // 기존 user와 같은 이메일
+                "password456"
+        );
+        verifyDuplicateEmailRejected(userService, duplicateEmailUser);
+
+        // 이메일 수정 중복 검증
+        User secondUser = new User(
+                "second tester",
+                "second@example.com",
+                "password456"
+        );
+        userService.create(secondUser);
+
+        User duplicateEmailUpdate = new User(
+                "updated tester",
+                secondUser.getEmail(), // 다른 사용자가 이미 쓰는 이메일
+                "updatedPassword123"
+        );
+        verifyDuplicateEmailUpdateRejected(
+                userService,
+                user.getId(),
+                user.getEmail(),
+                duplicateEmailUpdate
+        );
+
         //
         // [] CHANNEL 등록
         ChannelService channelService = new JCFChannelService();
@@ -150,5 +178,46 @@ public class JavaApplication_DI {
         System.out.println(testName
                 + " 검증 결과: 예외 발생=" + rejected
                 + ", 메시지 저장 여부=" + wasSaved);
+    }
+
+    private static void verifyDuplicateEmailRejected(
+            UserService userService,
+            User user
+    ) {
+        boolean rejected = false;
+
+        try {
+            userService.create(user);
+        } catch (IllegalArgumentException e) {
+            rejected = true;
+        }
+
+        boolean wasSaved = userService.findAll().stream()
+                .anyMatch(savedUser -> savedUser.getId().equals((user.getId())));
+
+        System.out.println("중복 이메일 생성 거부: "
+                + (rejected && !wasSaved));
+    }
+
+    private static void verifyDuplicateEmailUpdateRejected(
+            UserService userService,
+            UUID userId,
+            String originalEmail,
+            User updatedUser
+    ) {
+        boolean rejected = false;
+
+        try {
+            userService.update(userId, updatedUser);
+        } catch (IllegalArgumentException e) {
+            rejected = true;
+        }
+
+        boolean emailUnchanged = userService.findById(userId)
+                .getEmail()
+                .equals(originalEmail);
+
+        System.out.println("중복 이메일 수정 거부: "
+                + (rejected && emailUnchanged));
     }
 }
