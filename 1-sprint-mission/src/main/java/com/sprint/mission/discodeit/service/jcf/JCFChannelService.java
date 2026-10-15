@@ -27,7 +27,15 @@ public class JCFChannelService implements ChannelService {
     // 채널 조회
     @Override
     public Channel findById(UUID id) {
-        return data.get(id);
+        Channel channel = data.get(id);
+
+        if (channel == null) {
+            throw new IllegalArgumentException(
+                    "Not Found channel id: " + id
+            );
+        }
+
+        return channel;
     }
 
     // 모든 채널 조회

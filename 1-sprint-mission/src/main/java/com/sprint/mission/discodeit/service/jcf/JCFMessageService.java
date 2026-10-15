@@ -7,7 +7,6 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
 
-import javax.swing.text.ChangedCharSetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,31 +27,28 @@ public class JCFMessageService implements MessageService {
         this.channelService = channelService;
     }
 
+    // Create
     @Override
     public void create(Message message) {
-
-        // User 조회
+        // User, Channel 조회
         User user = userService.findById(message.getUserId());
-        if (user == null) {
-            throw new IllegalArgumentException(
-                    "User not found: " + message.getUserId()
-            );
-        }
-
-        // channel 조회
         Channel channel = channelService.findById(message.getChannelId());
-        if (channel == null) {
-            throw new IllegalArgumentException(
-                    "Channel not found: " + message.getChannelId()
-            );
-        }
 
         data.put(message.getId(), message);
     }
 
+    // Read
     @Override
     public Message findById(UUID id) {
-        return data.get(id);
+        Message message = data.get(id);
+
+        if (message == null) {
+            throw new IllegalArgumentException(
+                    "Not Found Message id: " + id
+            );
+        }
+
+        return message;
     }
 
     @Override
@@ -60,8 +56,9 @@ public class JCFMessageService implements MessageService {
         return List.copyOf(data.values());
     }
 
+    // Update
     @Override
-    public void update(UUID id, Message message) {
+    public void update(UUID id, String content) {
         Message existingMessage = data.get(id);
 
         if (existingMessage == null) {
@@ -70,11 +67,18 @@ public class JCFMessageService implements MessageService {
             );
         }
 
-        existingMessage.update(message.getContent());
+        existingMessage.update(content);
     }
 
+    // Delete
     @Override
     public void delete(UUID id) {
-        data.remove(id);
+        Message removedMessage = data.remove(id);
+
+        if (removedMessage == null) {
+            throw new IllegalArgumentException(
+                    "Message not found: " + id
+            );
+        }
     }
 }

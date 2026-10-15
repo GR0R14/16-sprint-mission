@@ -26,7 +26,15 @@ public class JCFUserService implements UserService {
     // 한명 조회
     @Override
     public User findById(UUID id) {
-        return data.get(id); // 값 없으면 null 반환
+        User user = data.get(id);
+
+        if (user == null) {
+            throw new IllegalArgumentException(
+                    "Not Found user id: " + id
+            );
+        }
+
+        return user;
     }
 
     // 전체 조회
@@ -41,7 +49,7 @@ public class JCFUserService implements UserService {
         User existingUser = data.get(id);
 
         if (existingUser == null) {
-            throw new IllegalArgumentException("존재하지 않는 사용자입니다: " + id);
+            throw new IllegalArgumentException("Not Found User: " + id);
         }
 
         existingUser.update(

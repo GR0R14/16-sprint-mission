@@ -55,6 +55,8 @@ public class JavaApplication_DI {
 
         // create
         messageService.create(message);
+        System.out.println("message 생성 완료");
+
         UUID messageId = message.getId();
 
         // read
@@ -62,21 +64,13 @@ public class JavaApplication_DI {
         System.out.println("message count: " + messageService.findAll().size());
 
         // update
-        Message updatedMessage = new Message(
-                "updated meessage",
-                user.getId(),
-                channel.getId()
-        );
-        messageService.update(messageId, updatedMessage);
+        messageService.update(messageId, "updated meessage");
+        System.out.println("message 수정 완료");
         System.out.println("message update: " + messageService.findById(messageId).getContent());
 
         // delete
         messageService.delete(messageId);
-        Message deletedMessage = messageService.findById(messageId);
-
-        System.out.println(
-                deletedMessage == null ? "message 삭제 완료" : "message 삭제 실패"
-        );
+        System.out.println("message 삭제 완료");
         System.out.println("message count: " + messageService.findAll().size());
 
     }
