@@ -29,6 +29,15 @@ public class JavaApplication_DI {
         System.out.println("Create User: " + userService.findById(user.getId()).getUsername());
         System.out.println("User counting: " + userService.findAll().size());
 
+        // update
+        User updatedUser = new User(
+                "updated tester",
+                "tester@example.com",
+                "updatedPassword123"
+        );
+        userService.update(user.getId(), updatedUser);
+        System.out.println("User update: " + userService.findById(user.getId()).getUsername());
+
         //
         // [] CHANNEL 등록
         ChannelService channelService = new JCFChannelService();
@@ -41,12 +50,21 @@ public class JavaApplication_DI {
         System.out.println("Create Channel: " + channelService.findById(channel.getId()).getName());
         System.out.println("Channel counting: " + channelService.findAll().size());
 
+        // update
+        Channel updatedChannel = new Channel(
+                "updated notice channel",
+                "Updated notice uploading Channel"
+        );
+        channelService.update(channel.getId(), updatedChannel);
+        System.out.println("Channel update: " + channelService.findById(channel.getId()).getName());
+
         // MESSAGE_DI CRUD TEST
         // [] MESSAGE 등록
         MessageService messageService = new JCFMessageService(
                 userService,
                 channelService
         );
+
         Message message = new Message(
                 "first message",
                 user.getId(),
@@ -68,10 +86,69 @@ public class JavaApplication_DI {
         System.out.println("message 수정 완료");
         System.out.println("message update: " + messageService.findById(messageId).getContent());
 
-        // delete
-        messageService.delete(messageId);
-        System.out.println("message 삭제 완료");
-        System.out.println("message count: " + messageService.findAll().size());
+        // 잘못된 사용자 ID의 객체 생성
+        Message messageWithMissingUser = new Message(
+                "message with missing user",
+                UUID.randomUUID(),
+                channel.getId()
+        );
 
+        printMessageCreationRejection(
+                messageService,
+                messageWithMissingUser,
+                "ID 검증"
+        );
+
+        Message messageWithMissingChannel = new Message(
+                "message with missing channel",
+                user.getId(),
+                UUID.randomUUID()
+        );
+
+        printMessageCreationRejection(
+                messageService,
+                messageWithMissingChannel,
+                "Channel 검증"
+        );
+
+        // delete: Message User, Channel 삭제
+        messageService.delete(messageId);
+        boolean messageStillExists = messageService.findAll().stream()
+                .anyMatch(savedMessage -> savedMessage.getId().equals(message.getId()));
+        System.out.println("Message 삭제: " + !messageStillExists);
+
+        userService.delete(user.getId());
+        boolean userStillExists = userService.findAll().stream()
+                .anyMatch(savedUser -> savedUser.getId().equals(user.getId()));
+        System.out.println("User 삭제: " + !userStillExists);
+
+        channelService.delete(channel.getId());
+        boolean channelStillExists = channelService.findAll().stream()
+                .anyMatch(savedChannel -> savedChannel.getId().equals(channel.getId()));
+        System.out.println("Channel 삭제: " + !channelStillExists);
+
+    }
+
+    private static void printMessageCreationRejection(
+            MessageService messageService,
+            Message message,
+            String testName
+    ) {
+        boolean rejected = false;
+
+        try {
+            messageService.create(message);
+        } catch (IllegalArgumentException e) {
+            rejected = true;
+        }
+
+        boolean wasSaved = messageService.findAll().stream()
+                .anyMatch(savedMessage ->
+                        savedMessage.getId().equals(message.getId()));
+
+        boolean passed = rejected && !wasSaved;
+        System.out.println(testName
+                + " 검증 결과: 예외 발생=" + rejected
+                + ", 메시지 저장 여부=" + wasSaved);
     }
 }
