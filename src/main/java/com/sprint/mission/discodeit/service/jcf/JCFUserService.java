@@ -20,6 +20,8 @@ public class JCFUserService implements UserService {
     // 사용자 생성
     @Override
     public void create(User user) {
+        validateEmail(user.getEmail());
+
         if (data.containsKey(user.getId())) {
             throw new IllegalArgumentException("이미 등록된 ID입니다: " + user.getId());
         }
@@ -64,6 +66,8 @@ public class JCFUserService implements UserService {
             );
         }
 
+        validateEmail(user.getEmail());
+
         if (isEmailDuplicate(user.getEmail(), id)) {
             throw new IllegalArgumentException(
                     "Email is already in use." + user.getEmail()
@@ -97,4 +101,16 @@ public class JCFUserService implements UserService {
                 );
     }
 
+    private void validateEmail(String email) {
+        // null, 공백 확인
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("이메일은 비어 있을 수 없습니다.");
+        }
+
+        // 이메일의 기본 형태 검사하는 정규식 패턴
+        String emailPattern = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        if (!email.matches(emailPattern)) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다." + email);
+        }
+    }
 }

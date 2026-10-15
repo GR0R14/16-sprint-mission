@@ -29,6 +29,25 @@ public class JavaApplication_DI {
         System.out.println("Create User: " + userService.findById(user.getId()).getUsername());
         System.out.println("User counting: " + userService.findAll().size());
 
+        // null, 공백, 잘못된 형식 이메일 검증
+        printInvalidEmailCreateRejected(
+                userService,
+                new User("null email", null, "password123"),
+                "null 이메일"
+        );
+
+        printInvalidEmailCreateRejected(
+                userService,
+                new User("blank email", "   ", "password123"),
+                "공백 이메일"
+        );
+
+        printInvalidEmailCreateRejected(
+                userService,
+                new User("invalid email", "not-an-email", "password123"),
+                "잘못된 형식 이메일"
+        );
+
         // update
         User updatedUser = new User(
                 "updated tester",
@@ -175,6 +194,7 @@ public class JavaApplication_DI {
 
     }
 
+    // static: 객체안만들어도 호출하기
     private static void printMessageCreationRejection(
             MessageService messageService,
             Message message,
@@ -196,6 +216,29 @@ public class JavaApplication_DI {
         System.out.println(testName
                 + " 검증 결과: 예외 발생=" + rejected
                 + ", 메시지 저장 여부=" + wasSaved);
+    }
+
+    private static void printInvalidEmailCreateRejected(
+            UserService userService,
+            User user,
+            String testName
+    ) {
+        boolean rejected = false;
+
+        try {
+            userService.create(user);
+        } catch (IllegalArgumentException e) {
+            rejected = true;
+        }
+
+        boolean wasSaved = userService.findAll().stream()
+                .anyMatch(savedUser ->
+                        savedUser.getId().equals(user.getId()));
+
+        System.out.println(testName + " 생성 검증: "
+                + (rejected && !wasSaved
+                ? "예외 발생, 저장되지 않음"
+                : "검증 실패"));
     }
 
     private static void verifyDuplicateEmailRejected(
