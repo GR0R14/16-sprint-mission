@@ -20,11 +20,11 @@ public class JCFUserService implements UserService {
     // 사용자 생성
     @Override
     public void create(User user) {
-        validateEmail(user.getEmail());
-
         if (data.containsKey(user.getId())) {
             throw new IllegalArgumentException("이미 등록된 ID입니다: " + user.getId());
         }
+
+        validateEmail(user.getEmail());
 
         if (isEmailDuplicate(user.getEmail(), null)) {
             throw new IllegalArgumentException(
