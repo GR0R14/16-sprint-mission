@@ -18,6 +18,8 @@ public class JavaApplication_DI {
 
     public static void main(String[] args) {
 
+        System.out.println("\n========== 사용자(User) ==========");
+
         // [] USER 등록
         UserService userService = new JCFUserService();
         User user = new User(
@@ -28,10 +30,10 @@ public class JavaApplication_DI {
         userService.create(user);
 
         // [ ] 조회(단건, 다건)
-        System.out.println("Create User: " + userService.findById(user.getId()).getUsername());
-        System.out.println("User counting: " + userService.findAll().size());
+        System.out.println("사용자 생성: " + userService.findById(user.getId()).getUsername());
+        System.out.println("등록된 사용자 수: " + userService.findAll().size());
 
-        // null, 공백, 잘못된 형식 이메일 검증
+        System.out.println("\n[이메일 형식 검증]");
         ServiceValidationDemo.printInvalidEmailCreateRejected(
                 userService,
                 new User("null email", null, "password123"),
@@ -50,16 +52,16 @@ public class JavaApplication_DI {
                 "잘못된 형식 이메일"
         );
 
-        // update
+        System.out.println("\n[사용자 수정]");
         User updatedUser = new User(
                 "updated tester",
                 "tester@example.com",
                 "updatedPassword123"
         );
         userService.update(user.getId(), updatedUser);
-        System.out.println("User update: " + userService.findById(user.getId()).getUsername());
+        System.out.println("수정된 사용자 이름: " + userService.findById(user.getId()).getUsername());
 
-        // 이메일 생성 중복 검증
+        System.out.println("\n[이메일 중복 검증]");
         User duplicateEmailUser = new User(
                 "another tester",
                 "tester@example.com", // 기존 user와 같은 이메일
@@ -87,7 +89,8 @@ public class JavaApplication_DI {
                 duplicateEmailUpdate
         );
 
-        //
+        System.out.println("\n========== 채널(Channel) ==========");
+
         // [] CHANNEL 등록
         ChannelService channelService = new JCFChannelService();
         Channel channel = new Channel(
@@ -96,18 +99,20 @@ public class JavaApplication_DI {
         );
         channelService.create(channel);
 
-        System.out.println("Create Channel: " + channelService.findById(channel.getId()).getName());
-        System.out.println("Channel counting: " + channelService.findAll().size());
+        System.out.println("채널 생성: " + channelService.findById(channel.getId()).getName());
+        System.out.println("등록된 채널 수: " + channelService.findAll().size());
 
-        // update
+        System.out.println("\n[채널 수정]");
         Channel updatedChannel = new Channel(
                 "updated notice channel",
                 "Updated notice uploading Channel"
         );
         channelService.update(channel.getId(), updatedChannel);
-        System.out.println("Channel update: " + channelService.findById(channel.getId()).getName());
+        System.out.println("수정된 채널 이름: " + channelService.findById(channel.getId()).getName());
 
-        // 기존 UserService와 ChannelService를 전달해 참여 서비스를 만듬
+        System.out.println("\n========== 채널 참여 ==========");
+
+        // 기존 UserService와 ChannelService를 전달해 참여 서비스를 만듭니다.
         ChannelParticipationService participationService =
                 new JCFChannelParticipationService(userService, channelService);
 
@@ -133,6 +138,8 @@ public class JavaApplication_DI {
         // User 삭제 시 참여 관계 정리도 확인할 수 있도록 다시 참여
         participationService.joinChannel(user.getId(), channel.getId());
 
+        System.out.println("\n========== 메시지(Message) ==========");
+
         // MESSAGE_DI CRUD TEST
         // [] MESSAGE 등록
         MessageService messageService = new JCFMessageService(
@@ -148,18 +155,19 @@ public class JavaApplication_DI {
 
         // create
         messageService.create(message);
-        System.out.println("message 생성 완료");
+        System.out.println("메시지 생성: 완료");
 
         UUID messageId = message.getId();
 
         // read
-        System.out.println("message: " + messageService.findById(messageId).getContent());
-        System.out.println("message count: " + messageService.findAll().size());
+        System.out.println("메시지 내용: " + messageService.findById(messageId).getContent());
+        System.out.println("등록된 메시지 수: " + messageService.findAll().size());
 
-        // update
+        System.out.println("\n[메시지 수정]");
         messageService.update(messageId, "updated meessage");
-        System.out.println("message 수정 완료");
-        System.out.println("message update: " + messageService.findById(messageId).getContent());
+        System.out.println("수정된 메시지 내용: " + messageService.findById(messageId).getContent());
+
+        System.out.println("\n[연관 데이터 검증 실패 사례]");
 
         // 잘못된 사용자 ID의 객체 생성
         Message messageWithMissingUser = new Message(
@@ -171,7 +179,7 @@ public class JavaApplication_DI {
         ServiceValidationDemo.printMessageCreationRejection(
                 messageService,
                 messageWithMissingUser,
-                "ID 검증"
+                "잘못된 사용자 ID"
         );
 
         Message messageWithMissingChannel = new Message(
@@ -183,14 +191,16 @@ public class JavaApplication_DI {
         ServiceValidationDemo.printMessageCreationRejection(
                 messageService,
                 messageWithMissingChannel,
-                "Channel 검증"
+                "잘못된 채널 ID"
         );
+
+        System.out.println("\n========== 삭제 및 연결 데이터 정리 ==========");
 
         // delete: Message User, Channel 삭제
         messageService.delete(messageId);
         boolean messageStillExists = messageService.findAll().stream()
                 .anyMatch(savedMessage -> savedMessage.getId().equals(message.getId()));
-        System.out.println("Message 삭제: " + !messageStillExists);
+        System.out.println("메시지 삭제: " + (!messageStillExists ? "성공" : "실패"));
 
         // User 연쇄 삭제 확인용 메시지
         Message messageForUserDelete = new Message(
@@ -207,7 +217,7 @@ public class JavaApplication_DI {
                 user.getId()
         );
 
-        System.out.println("User 및 연결 데이터 삭제: "
+        System.out.println("User와 연결 데이터 삭제: "
                 + (userAndRelationsDeleted ? "성공" : "실패"));
 
         // Channel 연쇄 삭제 확인용 메시지
@@ -225,7 +235,7 @@ public class JavaApplication_DI {
                 channel.getId()
         );
 
-        System.out.println("Channel 및 연결 데이터 삭제: "
+        System.out.println("Channel과 연결 데이터 삭제: "
                 + (channelAndRelationsDeleted ? "성공" : "실패"));
     }
 
