@@ -30,6 +30,10 @@ public class JCFMessageService implements MessageService {
     // Create
     @Override
     public void create(Message message) {
+        if (message == null) {
+            throw new IllegalArgumentException("Message cannot be null.");
+        }
+
         if (data.containsKey(message.getId())) {
             throw new IllegalArgumentException("이미 등록된 ID입니다: " + message.getId());
         }
