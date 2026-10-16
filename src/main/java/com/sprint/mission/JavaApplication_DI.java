@@ -3,9 +3,11 @@ package com.sprint.mission;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.service.ChannelParticipationService;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.service.jcf.JCFChannelParticipationService;
 import com.sprint.mission.discodeit.service.jcf.JCFChannelService;
 import com.sprint.mission.discodeit.service.jcf.JCFMessageService;
 import com.sprint.mission.discodeit.service.jcf.JCFUserService;
@@ -30,19 +32,19 @@ public class JavaApplication_DI {
         System.out.println("User counting: " + userService.findAll().size());
 
         // null, 공백, 잘못된 형식 이메일 검증
-        printInvalidEmailCreateRejected(
+        ServiceValidationDemo.printInvalidEmailCreateRejected(
                 userService,
                 new User("null email", null, "password123"),
                 "null 이메일"
         );
 
-        printInvalidEmailCreateRejected(
+        ServiceValidationDemo.printInvalidEmailCreateRejected(
                 userService,
                 new User("blank email", "   ", "password123"),
                 "공백 이메일"
         );
 
-        printInvalidEmailCreateRejected(
+        ServiceValidationDemo.printInvalidEmailCreateRejected(
                 userService,
                 new User("invalid email", "not-an-email", "password123"),
                 "잘못된 형식 이메일"
@@ -63,7 +65,7 @@ public class JavaApplication_DI {
                 "tester@example.com", // 기존 user와 같은 이메일
                 "password456"
         );
-        verifyDuplicateEmailRejected(userService, duplicateEmailUser);
+        ServiceValidationDemo.verifyDuplicateEmailRejected(userService, duplicateEmailUser);
 
         // 이메일 수정 중복 검증
         User secondUser = new User(
@@ -78,7 +80,7 @@ public class JavaApplication_DI {
                 secondUser.getEmail(), // 다른 사용자가 이미 쓰는 이메일
                 "updatedPassword123"
         );
-        verifyDuplicateEmailUpdateRejected(
+        ServiceValidationDemo.verifyDuplicateEmailUpdateRejected(
                 userService,
                 user.getId(),
                 user.getEmail(),
@@ -104,6 +106,32 @@ public class JavaApplication_DI {
         );
         channelService.update(channel.getId(), updatedChannel);
         System.out.println("Channel update: " + channelService.findById(channel.getId()).getName());
+
+        // 기존 UserService와 ChannelService를 전달해 참여 서비스를 만듬
+        ChannelParticipationService participationService =
+                new JCFChannelParticipationService(userService, channelService);
+
+        // 참여 요청
+        participationService.joinChannel(user.getId(), channel.getId());
+        participationService.joinChannel(secondUser.getId(), channel.getId());
+        // 조회 결과에 사용자 ID가 있으면 참여가 확인된 것입니다.
+        boolean joined = participationService
+                .findParticipantIds(channel.getId())
+                .contains(user.getId());
+
+        System.out.println("채널 참여: " + (joined ? "성공" : "실패"));
+
+        // 탈퇴 요청
+        participationService.leaveChannel(user.getId(), channel.getId());
+        // 탈퇴 후 참여자 목록에 사용자 ID가 없는지 확인합니다.
+        boolean stillJoined = participationService
+                .findParticipantIds(channel.getId())
+                .contains(user.getId());
+
+        System.out.println("채널 탈퇴: " + (!stillJoined ? "성공" : "실패"));
+
+        // User 삭제 시 참여 관계 정리도 확인할 수 있도록 다시 참여
+        participationService.joinChannel(user.getId(), channel.getId());
 
         // MESSAGE_DI CRUD TEST
         // [] MESSAGE 등록
@@ -140,7 +168,7 @@ public class JavaApplication_DI {
                 channel.getId()
         );
 
-        printMessageCreationRejection(
+        ServiceValidationDemo.printMessageCreationRejection(
                 messageService,
                 messageWithMissingUser,
                 "ID 검증"
@@ -152,7 +180,7 @@ public class JavaApplication_DI {
                 UUID.randomUUID()
         );
 
-        printMessageCreationRejection(
+        ServiceValidationDemo.printMessageCreationRejection(
                 messageService,
                 messageWithMissingChannel,
                 "Channel 검증"
@@ -172,11 +200,15 @@ public class JavaApplication_DI {
         );
         messageService.create(messageForUserDelete);
 
-        boolean userAndMessagesDeleted =
-                deleteUserAndMessages(userService, messageService, user.getId());
+        boolean userAndRelationsDeleted = deleteUserAndMessages(
+                userService,
+                messageService,
+                participationService,
+                user.getId()
+        );
 
-        System.out.println("User 및 연결 메시지 삭제: "
-                + (userAndMessagesDeleted ? "성공" : "실패"));
+        System.out.println("User 및 연결 데이터 삭제: "
+                + (userAndRelationsDeleted ? "성공" : "실패"));
 
         // Channel 연쇄 삭제 확인용 메시지
         Message messageForChannelDelete = new Message(
@@ -186,105 +218,21 @@ public class JavaApplication_DI {
         );
         messageService.create(messageForChannelDelete);
 
-        boolean channelAndMessagesDeleted =
-                deleteChannelAndMessages(channelService, messageService, channel.getId());
+        boolean channelAndRelationsDeleted = deleteChannelAndMessages(
+                channelService,
+                messageService,
+                participationService,
+                channel.getId()
+        );
 
-        System.out.println("Channel 및 연결 메시지 삭제: "
-                + (channelAndMessagesDeleted ? "성공" : "실패"));
-
-    }
-
-    // static: 객체안만들어도 호출하기
-    private static void printMessageCreationRejection(
-            MessageService messageService,
-            Message message,
-            String testName
-    ) {
-        boolean rejected = false;
-
-        try {
-            messageService.create(message);
-        } catch (IllegalArgumentException e) {
-            rejected = true;
-        }
-
-        boolean wasSaved = messageService.findAll().stream()
-                .anyMatch(savedMessage ->
-                        savedMessage.getId().equals(message.getId()));
-
-        boolean passed = rejected && !wasSaved;
-        System.out.println(testName
-                + " 검증 결과: 예외 발생=" + rejected
-                + ", 메시지 저장 여부=" + wasSaved);
-    }
-
-    private static void printInvalidEmailCreateRejected(
-            UserService userService,
-            User user,
-            String testName
-    ) {
-        boolean rejected = false;
-
-        try {
-            userService.create(user);
-        } catch (IllegalArgumentException e) {
-            rejected = true;
-        }
-
-        boolean wasSaved = userService.findAll().stream()
-                .anyMatch(savedUser ->
-                        savedUser.getId().equals(user.getId()));
-
-        System.out.println(testName + " 생성 검증: "
-                + (rejected && !wasSaved
-                ? "예외 발생, 저장되지 않음"
-                : "검증 실패"));
-    }
-
-    private static void verifyDuplicateEmailRejected(
-            UserService userService,
-            User user
-    ) {
-        boolean rejected = false;
-
-        try {
-            userService.create(user);
-        } catch (IllegalArgumentException e) {
-            rejected = true;
-        }
-
-        boolean wasSaved = userService.findAll().stream()
-                .anyMatch(savedUser -> savedUser.getId().equals((user.getId())));
-
-        System.out.println("중복 이메일 생성 거부: "
-                + (rejected && !wasSaved));
-    }
-
-    private static void verifyDuplicateEmailUpdateRejected(
-            UserService userService,
-            UUID userId,
-            String originalEmail,
-            User updatedUser
-    ) {
-        boolean rejected = false;
-
-        try {
-            userService.update(userId, updatedUser);
-        } catch (IllegalArgumentException e) {
-            rejected = true;
-        }
-
-        boolean emailUnchanged = userService.findById(userId)
-                .getEmail()
-                .equals(originalEmail);
-
-        System.out.println("중복 이메일 수정 거부: "
-                + (rejected && emailUnchanged));
+        System.out.println("Channel 및 연결 데이터 삭제: "
+                + (channelAndRelationsDeleted ? "성공" : "실패"));
     }
 
     private static boolean deleteUserAndMessages(
             UserService userService,
             MessageService messageService,
+            ChannelParticipationService participationService,
             UUID userId
     ) {
         userService.findById(userId);
@@ -295,6 +243,11 @@ public class JavaApplication_DI {
                 .toList()
                 .forEach(messageService::delete);
 
+        // User 삭제 전에 참여 관계를 제거
+        participationService.removeUserFromAllChannels(userId);
+        boolean stillParticipates =
+                !participationService.findChannelIds(userId).isEmpty();
+
         userService.delete(userId);
 
         boolean userStillExists = userService.findAll().stream()
@@ -302,12 +255,15 @@ public class JavaApplication_DI {
         boolean userMessageStillExists = messageService.findAll().stream()
                 .anyMatch(message -> message.getUserId().equals(userId));
 
-        return !userStillExists && !userMessageStillExists;
+        return !userStillExists
+                && !userMessageStillExists
+                && !stillParticipates;
     }
 
     private static boolean deleteChannelAndMessages(
             ChannelService channelService,
             MessageService messageService,
+            ChannelParticipationService participationService,
             UUID channelId
     ) {
         channelService.findById(channelId);
@@ -318,6 +274,11 @@ public class JavaApplication_DI {
                 .toList()
                 .forEach(messageService::delete);
 
+        // Channel 삭제 전에 모든 참여 관계를 제거
+        participationService.removeAllParticipants(channelId);
+        boolean stillHasParticipants =
+                !participationService.findParticipantIds(channelId).isEmpty();
+
         channelService.delete(channelId);
 
         boolean channelStillExists = channelService.findAll().stream()
@@ -325,6 +286,8 @@ public class JavaApplication_DI {
         boolean channelMessageStillExists = messageService.findAll().stream()
                 .anyMatch(message -> message.getChannelId().equals(channelId));
 
-        return !channelStillExists && !channelMessageStillExists;
+        return !channelStillExists
+                && !channelMessageStillExists
+                && !stillHasParticipants;
     }
 }
