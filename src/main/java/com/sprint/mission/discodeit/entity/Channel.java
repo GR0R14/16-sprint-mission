@@ -5,6 +5,8 @@ package com.sprint.mission.discodeit.entity;
 import java.util.UUID;
 
 public class Channel extends BaseEntity{
+    private static final long serialVersionUID = 1L;
+
     // Channel field
     private String name;
     private String description;

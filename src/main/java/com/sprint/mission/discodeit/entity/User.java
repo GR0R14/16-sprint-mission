@@ -4,6 +4,8 @@ import java.util.UUID;
 
 //서비스를 사용하는 사용자 정보
 public class User extends BaseEntity{
+    private static final long serialVersionUID = 1L;
+
     // User field
     private String username;
     private String email;

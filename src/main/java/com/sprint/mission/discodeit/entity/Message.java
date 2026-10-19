@@ -3,6 +3,8 @@ package com.sprint.mission.discodeit.entity;
 import java.util.UUID;
 
 public class Message extends BaseEntity {
+    private static final long serialVersionUID = 1L;
+
     // Message field
     private String content;
     private final UUID userId;
