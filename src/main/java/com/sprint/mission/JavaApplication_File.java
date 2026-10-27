@@ -3,12 +3,6 @@ package com.sprint.mission;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.repository.ChannelRepository;
-import com.sprint.mission.discodeit.repository.MessageRepository;
-import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.file.FileChannelRepository;
-import com.sprint.mission.discodeit.repository.file.FileMessageRepository;
-import com.sprint.mission.discodeit.repository.file.FileUserRepository;
 import com.sprint.mission.discodeit.service.ChannelParticipationService;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
@@ -36,31 +30,23 @@ public class JavaApplication_File {
                 System.getProperty("user.dir"), "data", "file-demo"
         );
 
-        // Repository 구현체가 파일 저장을 담당하고, File*Service에 인터페이스 타입으로 전달됩니다.
-        UserRepository userRepository = new FileUserRepository(
-                dataDirectory.resolve("users")
-        );
-        ChannelRepository channelRepository = new FileChannelRepository(
+        // 기본 요구사항을 보여주기 위해 File*Service가 각각의 디렉터리를 직접 관리합니다.
+        // 각 서비스 내부에서 Path, Files, ObjectInputStream/ObjectOutputStream을 사용합니다.
+        UserService userService = new FileUserService(dataDirectory.resolve("users"));
+        ChannelService channelService = new FileChannelService(
                 dataDirectory.resolve("channels")
         );
-        MessageRepository messageRepository = new FileMessageRepository(
-                dataDirectory.resolve("messages")
-        );
-
-        // File*Service는 검증과 비즈니스 흐름을 담당하고, 저장 작업을 위 Repository에 위임합니다.
-        UserService userService = new FileUserService(userRepository);
-        ChannelService channelService = new FileChannelService(channelRepository);
 
         // 생성자는 UserService와 ChannelService를 받아 참여 시 두 대상의 존재 여부를 확인합니다.
         // 이 구현체의 참여 관계는 JCF 메모리에 보관되므로 프로그램을 종료하면 사라집니다.
         ChannelParticipationService participationService =
                 new JCFChannelParticipationService(userService, channelService);
 
-        // Message 서비스는 자체 저장소와 작성자·채널 서비스를 전달받습니다.
+        // 메시지 서비스는 파일 경로와 작성자·채널 확인에 필요한 서비스를 받습니다.
         MessageService messageService = new FileMessageService(
-                messageRepository,
                 userService,
-                channelService
+                channelService,
+                dataDirectory.resolve("messages")
         );
 
         System.out.println("========== 기존 파일 데이터 ==========");
