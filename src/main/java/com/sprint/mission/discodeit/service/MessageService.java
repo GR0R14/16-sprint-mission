@@ -10,6 +10,14 @@ public interface MessageService {
 
     void create(Message message);
 
+    /** 템플릿용 편의 API. 인자 순서는 content, channelId, authorId입니다. */
+    default Message create(String content, UUID channelId, UUID authorId) {
+        // Message 생성자 순서는 content, userId(authorId), channelId이므로 변환합니다.
+        Message message = new Message(content, authorId, channelId);
+        create(message);
+        return message;
+    }
+
     Message findById(UUID id);
 
     List<Message> findAll();
