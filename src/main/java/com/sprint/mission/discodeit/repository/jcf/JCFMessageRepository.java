@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+/** MessageRepository를 Java Collection Framework의 Map으로 구현합니다. */
 public class JCFMessageRepository implements MessageRepository {
 
     // Message ID를 키로, Message 객체를 값으로 보관합니다.

@@ -7,11 +7,11 @@ import com.sprint.mission.discodeit.service.UserService;
 import java.util.UUID;
 
 /**
- * JavaApplication_DI에서 사용하는 서비스 검증 시나리오를 모아 둡니다.
+ * JavaApplication_DI에서 사용하는 서비스 검증 메서드를 모아 둡니다.
  */
-public final class ServiceValidationDemo {
+public final class ServiceValidationMethods {
 
-    private ServiceValidationDemo() {
+    private ServiceValidationMethods() {
     }
 
     public static void printMessageCreationRejection(

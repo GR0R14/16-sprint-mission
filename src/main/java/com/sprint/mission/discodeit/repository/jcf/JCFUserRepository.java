@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+/** UserRepository를 JCF의 Map으로 구현합니다. 저장 데이터는 실행 중 메모리에만 있습니다. */
 public class JCFUserRepository implements UserRepository {
 
     // UUID를 키로, User 객체를 값으로 보관하는 메모리 저장소입니다.

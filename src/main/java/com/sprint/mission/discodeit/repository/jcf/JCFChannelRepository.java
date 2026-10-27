@@ -9,8 +9,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+/** ChannelRepository를 Java Collection Framework의 Map으로 구현합니다. */
 public class JCFChannelRepository implements ChannelRepository {
 
+    // 메모리 안에서 UUID로 객체를 빠르게 찾습니다. 프로그램 종료 후 데이터는 사라집니다.
     private final Map<UUID, Channel> data = new HashMap<>();
 
     @Override
@@ -30,6 +32,7 @@ public class JCFChannelRepository implements ChannelRepository {
 
     @Override
     public boolean existsById(UUID id) {
+        // Map의 키 존재 여부만 확인하므로 객체 전체를 꺼낼 필요가 없습니다.
         return data.containsKey(id);
     }
 

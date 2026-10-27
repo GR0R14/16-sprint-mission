@@ -34,19 +34,19 @@ public class JavaApplication_DI {
         System.out.println("등록된 사용자 수: " + userService.findAll().size());
 
         System.out.println("\n[이메일 형식 검증]");
-        ServiceValidationDemo.printInvalidEmailCreateRejected(
+        ServiceValidationMethods.printInvalidEmailCreateRejected(
                 userService,
                 new User("null email", null, "password123"),
                 "null 이메일"
         );
 
-        ServiceValidationDemo.printInvalidEmailCreateRejected(
+        ServiceValidationMethods.printInvalidEmailCreateRejected(
                 userService,
                 new User("blank email", "   ", "password123"),
                 "공백 이메일"
         );
 
-        ServiceValidationDemo.printInvalidEmailCreateRejected(
+        ServiceValidationMethods.printInvalidEmailCreateRejected(
                 userService,
                 new User("invalid email", "not-an-email", "password123"),
                 "잘못된 형식 이메일"
@@ -67,7 +67,7 @@ public class JavaApplication_DI {
                 "tester@example.com", // 기존 user와 같은 이메일
                 "password456"
         );
-        ServiceValidationDemo.verifyDuplicateEmailRejected(userService, duplicateEmailUser);
+        ServiceValidationMethods.verifyDuplicateEmailRejected(userService, duplicateEmailUser);
 
         // 이메일 수정 중복 검증
         User secondUser = new User(
@@ -82,7 +82,7 @@ public class JavaApplication_DI {
                 secondUser.getEmail(), // 다른 사용자가 이미 쓰는 이메일
                 "updatedPassword123"
         );
-        ServiceValidationDemo.verifyDuplicateEmailUpdateRejected(
+        ServiceValidationMethods.verifyDuplicateEmailUpdateRejected(
                 userService,
                 user.getId(),
                 user.getEmail(),
@@ -176,7 +176,7 @@ public class JavaApplication_DI {
                 channel.getId()
         );
 
-        ServiceValidationDemo.printMessageCreationRejection(
+        ServiceValidationMethods.printMessageCreationRejection(
                 messageService,
                 messageWithMissingUser,
                 "잘못된 사용자 ID"
@@ -188,7 +188,7 @@ public class JavaApplication_DI {
                 UUID.randomUUID()
         );
 
-        ServiceValidationDemo.printMessageCreationRejection(
+        ServiceValidationMethods.printMessageCreationRejection(
                 messageService,
                 messageWithMissingChannel,
                 "잘못된 채널 ID"
