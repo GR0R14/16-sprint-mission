@@ -74,13 +74,9 @@ public class FileChannelService implements ChannelService {
     }
 
     @Override
-    public void update(UUID id, Channel channel) {
-        if (channel == null) {
-            throw new IllegalArgumentException("Channel cannot be null.");
-        }
-
+    public void update(UUID id, String name, String description) {
         Channel existingChannel = findById(id);
-        existingChannel.update(channel.getName(), channel.getDescription());
+        existingChannel.update(name, description);
         // 변경된 객체를 동일한 UUID 파일에 다시 기록해 업데이트합니다.
         write(fileFor(id), existingChannel);
     }

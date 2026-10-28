@@ -3,6 +3,8 @@ package com.sprint.mission.discodeit.repository.jcf;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +29,12 @@ public class JCFChannelRepository implements ChannelRepository {
 
     @Override
     public List<Channel> findAll() {
-        return List.copyOf(data.values());
+        List<Channel> channels = new ArrayList<>(data.values());
+        channels.sort(
+                Comparator.comparing(Channel::getCreatedAt)
+                        .thenComparing(Channel::getId)
+        );
+        return List.copyOf(channels);
     }
 
     @Override

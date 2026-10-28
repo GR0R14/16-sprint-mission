@@ -15,7 +15,7 @@ public class BasicChannelService implements ChannelService {
     /** 생성자에 받은 인터페이스 구현체가 실제 저장 방식을 결정합니다. */
     public BasicChannelService(ChannelRepository channelRepository) {
         if (channelRepository == null) {
-            throw new IllegalArgumentException("ChannelRepository cannot be null.");
+            throw new IllegalArgumentException("채널 저장소는 null일 수 없습니다.");
         }
         this.channelRepository = channelRepository;
     }
@@ -23,10 +23,10 @@ public class BasicChannelService implements ChannelService {
     @Override
     public void create(Channel channel) {
         if (channel == null) {
-            throw new IllegalArgumentException("Channel cannot be null.");
+            throw new IllegalArgumentException("채널은 null일 수 없습니다.");
         }
         if (channelRepository.existsById(channel.getId())) {
-            throw new IllegalArgumentException("이미 등록된 ID입니다: " + channel.getId());
+            throw new IllegalArgumentException("이미 등록된 채널 ID입니다: " + channel.getId());
         }
 
         channelRepository.save(channel);
@@ -35,7 +35,7 @@ public class BasicChannelService implements ChannelService {
     @Override
     public Channel findById(UUID id) {
         return channelRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Not Found channel id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("채널을 찾을 수 없습니다: " + id));
     }
 
     @Override
@@ -44,20 +44,16 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
-    public void update(UUID id, Channel channel) {
-        if (channel == null) {
-            throw new IllegalArgumentException("Channel cannot be null.");
-        }
-
+    public void update(UUID id, String name, String description) {
         Channel existingChannel = findById(id);
-        existingChannel.update(channel.getName(), channel.getDescription());
+        existingChannel.update(name, description);
         channelRepository.save(existingChannel);
     }
 
     @Override
     public void delete(UUID id) {
         if (!channelRepository.deleteById(id)) {
-            throw new IllegalArgumentException("Not Found channel id: " + id);
+            throw new IllegalArgumentException("채널을 찾을 수 없습니다: " + id);
         }
     }
 }

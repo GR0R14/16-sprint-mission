@@ -14,7 +14,7 @@ import com.sprint.mission.discodeit.service.jcf.JCFUserService;
 
 import java.util.UUID;
 
-public class JavaApplication_DI {
+public class JavaApplication_JCF {
 
     public static void main(String[] args) {
 
@@ -103,11 +103,11 @@ public class JavaApplication_DI {
         System.out.println("등록된 채널 수: " + channelService.findAll().size());
 
         System.out.println("\n[채널 수정]");
-        Channel updatedChannel = new Channel(
+        channelService.update(
+                channel.getId(),
                 "updated notice channel",
                 "Updated notice uploading Channel"
         );
-        channelService.update(channel.getId(), updatedChannel);
         System.out.println("수정된 채널 이름: " + channelService.findById(channel.getId()).getName());
 
         System.out.println("\n========== 채널 참여 ==========");

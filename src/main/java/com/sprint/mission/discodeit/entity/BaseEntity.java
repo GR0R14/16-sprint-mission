@@ -6,10 +6,7 @@ import java.util.UUID;
 public abstract class BaseEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    // 필드를 private으로 선언해 외부에서 직접 수정하지 못하게 하고,
-    // Getter로 값을 읽을 수 있게 setting.
-    // 불변 객체로 선언해서 외부 접근 및 값 변경 방지
-    private final UUID id; // 고유 식별자
+    private final UUID id;
     private final Long createdAt;
     private Long updatedAt;
 

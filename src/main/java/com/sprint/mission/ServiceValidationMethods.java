@@ -7,7 +7,7 @@ import com.sprint.mission.discodeit.service.UserService;
 import java.util.UUID;
 
 /**
- * JavaApplication_DI에서 사용하는 서비스 검증 메서드를 모아 둡니다.
+ * JavaApplication_JCF에서 사용하는 서비스 검증 메서드를 모아 둡니다.
  */
 public final class ServiceValidationMethods {
 
