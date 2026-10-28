@@ -1,7 +1,10 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
 import java.util.UUID;
 
+@Getter
 public class Message extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
@@ -14,16 +17,6 @@ public class Message extends BaseEntity {
         this.content = content;
         this.userId = userId;
         this.channelId = channelId;
-    }
-
-    public String getContent() {
-        return content;
-    }
-    public UUID getUserId() {
-        return userId;
-    }
-    public UUID getChannelId() {
-        return channelId;
     }
 
     public void update(String content) {
