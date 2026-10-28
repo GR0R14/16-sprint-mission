@@ -3,16 +3,17 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 /** 사용자 업무 규칙을 처리하며, 실제 저장 방법은 UserRepository 구현체에 맡깁니다. */
+@Service
 public class BasicUserService implements UserService {
 
     private final UserRepository userRepository;
 
-    /** 생성자 주입: 실행하는 쪽에서 JCF 또는 File 저장소를 선택해 전달합니다. */
     public BasicUserService(UserRepository userRepository) {
         if (userRepository == null) {
             throw new IllegalArgumentException("UserRepository cannot be null.");
@@ -34,7 +35,6 @@ public class BasicUserService implements UserService {
             throw new IllegalArgumentException("Email is already in use: " + user.getEmail());
         }
 
-        // 모든 업무 규칙을 통과한 뒤에만 Repository에 저장을 요청합니다.
         userRepository.save(user);
     }
 
@@ -62,7 +62,6 @@ public class BasicUserService implements UserService {
         }
 
         existingUser.update(user.getUsername(), user.getEmail(), user.getPassword());
-        // 수정된 객체를 같은 ID로 저장합니다. 저장소가 Map 교체 또는 파일 덮어쓰기를 수행합니다.
         userRepository.save(existingUser);
     }
 

@@ -3,16 +3,17 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 /** 채널 업무 흐름을 처리하고 영속화는 ChannelRepository에 맡깁니다. */
+@Service
 public class BasicChannelService implements ChannelService {
 
     private final ChannelRepository channelRepository;
 
-    /** 생성자에 받은 인터페이스 구현체가 실제 저장 방식을 결정합니다. */
     public BasicChannelService(ChannelRepository channelRepository) {
         if (channelRepository == null) {
             throw new IllegalArgumentException("채널 저장소는 null일 수 없습니다.");

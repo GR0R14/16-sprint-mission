@@ -1,11 +1,8 @@
 package com.sprint.mission.discodeit.entity;
 
-//사용자들이 메시지를 주고받는 채널 정보
-
 public class Channel extends BaseEntity{
     private static final long serialVersionUID = 1L;
 
-    // Channel field
     private final ChannelType type;
     private String name;
     private String description;
@@ -43,4 +40,3 @@ public class Channel extends BaseEntity{
         updateUpdatedAt();
     }
 }
-

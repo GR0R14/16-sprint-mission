@@ -27,7 +27,6 @@ public class JCFMessageService implements MessageService {
         this.channelService = channelService;
     }
 
-    // Create
     @Override
     public void create(Message message) {
         if (message == null) {
@@ -38,14 +37,12 @@ public class JCFMessageService implements MessageService {
             throw new IllegalArgumentException("이미 등록된 ID입니다: " + message.getId());
         }
 
-        // User, Channel 조회
         User user = userService.findById(message.getUserId());
         Channel channel = channelService.findById(message.getChannelId());
 
         data.put(message.getId(), message);
     }
 
-    // Read
     @Override
     public Message findById(UUID id) {
         Message message = data.get(id);
@@ -64,7 +61,6 @@ public class JCFMessageService implements MessageService {
         return List.copyOf(data.values());
     }
 
-    // Update
     @Override
     public void update(UUID id, String content) {
         Message existingMessage = data.get(id);
@@ -78,7 +74,6 @@ public class JCFMessageService implements MessageService {
         existingMessage.update(content);
     }
 
-    // Delete
     @Override
     public void delete(UUID id) {
         Message removedMessage = data.remove(id);

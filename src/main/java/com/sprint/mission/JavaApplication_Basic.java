@@ -52,8 +52,6 @@ public class JavaApplication_Basic {
 
     public static void main(String[] args) {
         System.out.println("========== Basic 서비스 + JCF Repository ==========");
-        // 구현 클래스는 변수 타입이 아니라 인터페이스 타입으로 보관합니다.
-        // 이 구성이 JCF 저장소를 선택하는 지점입니다.
         UserRepository jcfUserRepository = new JCFUserRepository();
         ChannelRepository jcfChannelRepository = new JCFChannelRepository();
         MessageRepository jcfMessageRepository = new JCFMessageRepository();
@@ -67,7 +65,6 @@ public class JavaApplication_Basic {
         );
 
         System.out.println("\n========== Basic 서비스 + File Repository ==========");
-        // 같은 Basic 서비스에 File 구현체를 넣으면 저장 방식만 파일로 바뀝니다.
         Path directory = Paths.get(
                 System.getProperty("user.dir"), "data", "basic-demo"
         );
@@ -99,7 +96,6 @@ public class JavaApplication_Basic {
         System.out.println("실행 전 채널 수: " + channelService.findAll().size());
         System.out.println("실행 전 메시지 수: " + messageService.findAll().size());
 
-        // 템플릿과 같은 준비 및 검증 흐름을 두 저장 방식에 각각 실행합니다.
         User user = setupUser(userService);
         Channel channel = setupChannel(channelService);
         messageCreateTest(messageService, channel, user);

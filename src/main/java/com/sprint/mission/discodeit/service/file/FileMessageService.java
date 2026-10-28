@@ -28,7 +28,6 @@ public class FileMessageService implements MessageService {
     private final UserService userService;
     private final ChannelService channelService;
 
-    /** 기본 저장 폴더는 실행 디렉터리 아래 data/messages입니다. */
     public FileMessageService(UserService userService, ChannelService channelService) {
         this(
                 userService,
@@ -37,7 +36,6 @@ public class FileMessageService implements MessageService {
         );
     }
 
-    /** 저장 위치를 전달받아 실행 환경이나 실습별로 디렉터리를 분리합니다. */
     public FileMessageService(
             UserService userService,
             ChannelService channelService,
@@ -68,11 +66,9 @@ public class FileMessageService implements MessageService {
             throw new IllegalArgumentException("이미 등록된 ID입니다: " + message.getId());
         }
 
-        // 메시지가 참조하는 작성자와 채널이 있는지 서비스에 확인합니다.
         userService.findById(message.getUserId());
         channelService.findById(message.getChannelId());
 
-        // 검증이 통과한 뒤 File IO로 메시지 객체를 직렬화합니다.
         write(file, message);
     }
 
@@ -101,7 +97,6 @@ public class FileMessageService implements MessageService {
     public void update(UUID id, String content) {
         Message existingMessage = findById(id);
         existingMessage.update(content);
-        // 같은 ID 파일을 다시 열어 변경된 객체를 덮어씁니다.
         write(fileFor(id), existingMessage);
     }
 
@@ -116,12 +111,10 @@ public class FileMessageService implements MessageService {
         }
     }
 
-    /** UUID와 확장자를 결합해 메시지 저장 파일 경로를 만듭니다. */
     private Path fileFor(UUID id) {
         return directory.resolve(id + EXTENSION);
     }
 
-    /** ObjectOutputStream으로 객체를 바이트 데이터로 직렬화해 파일에 기록합니다. */
     private void write(Path file, Message message) {
         try (ObjectOutputStream out =
                      new ObjectOutputStream(Files.newOutputStream(file))) {
@@ -131,7 +124,6 @@ public class FileMessageService implements MessageService {
         }
     }
 
-    /** ObjectInputStream으로 파일 바이트를 Message 객체로 역직렬화합니다. */
     private Message read(Path file) {
         try (ObjectInputStream in =
                      new ObjectInputStream(Files.newInputStream(file))) {

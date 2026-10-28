@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -16,6 +17,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /** 채널별 직렬화 파일을 저장소로 사용합니다. */
+@Repository
 public class FileChannelRepository implements ChannelRepository {
 
     private final Path directory;

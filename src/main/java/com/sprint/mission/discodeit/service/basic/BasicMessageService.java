@@ -5,18 +5,19 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 /** 메시지 규칙과 참조 검증을 처리하며 세 저장소 인터페이스에 저장을 위임합니다. */
+@Service
 public class BasicMessageService implements MessageService {
 
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final ChannelRepository channelRepository;
 
-    /** 메시지 저장소와 메시지가 참조하는 작성자·채널 저장소를 생성자로 받습니다. */
     public BasicMessageService(
             MessageRepository messageRepository,
             UserRepository userRepository,
@@ -39,7 +40,6 @@ public class BasicMessageService implements MessageService {
             throw new IllegalArgumentException("이미 등록된 ID입니다: " + message.getId());
         }
 
-        // 메시지가 가리키는 작성자와 채널이 실제 저장되어 있는지 확인합니다.
         userRepository.findById(message.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Not Found user id: " + message.getUserId()));
