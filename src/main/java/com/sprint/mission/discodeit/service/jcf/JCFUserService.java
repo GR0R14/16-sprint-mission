@@ -1,14 +1,13 @@
 package com.sprint.mission.discodeit.service.jcf;
 
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.service.UserService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class JCFUserService implements UserService {
+public class JCFUserService {
 
     private final Map<UUID, User> data;
 
@@ -16,7 +15,6 @@ public class JCFUserService implements UserService {
         this.data = new HashMap<>();
 }
 
-    @Override
     public void create(User user) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null.");
@@ -37,7 +35,6 @@ public class JCFUserService implements UserService {
         data.put(user.getId(), user);
     }
 
-    @Override
     public User findById(UUID id) {
         User user = data.get(id);
 
@@ -50,12 +47,10 @@ public class JCFUserService implements UserService {
         return user;
     }
 
-    @Override
     public List<User> findAll() {
         return List.copyOf(data.values());
     }
 
-    @Override
     public void update(UUID id, User user) {
         User existingUser = data.get(id);
 
@@ -76,11 +71,11 @@ public class JCFUserService implements UserService {
         existingUser.update(
                 user.getUsername(),
                 user.getEmail(),
-                user.getPassword()
+                user.getPassword(),
+                existingUser.getProfileId()
         );
     }
 
-    @Override
     public void delete(UUID id) {
         User removedUser = data.remove(id);
         if (removedUser == null) {

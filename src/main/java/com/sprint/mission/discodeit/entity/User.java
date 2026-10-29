@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.entity;
 
 import lombok.Getter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Getter
@@ -26,10 +27,16 @@ public class User extends BaseEntity{
         this.profileId = profileId;
     }
 
-    public void update(String username, String email, String password) {
+    public void update(
+            String username,
+            String email,
+            String password,
+            UUID profileId
+    ) {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.profileId = profileId;
         updateUpdatedAt();
     }
 

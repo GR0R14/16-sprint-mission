@@ -1,7 +1,6 @@
 package com.sprint.mission.discodeit.service.file;
 
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.service.UserService;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -13,12 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * 기본 요구사항의 File 서비스 예제입니다.
- * 이 클래스가 업무 규칙과 File IO 저장 처리를 함께 담당합니다.
- * 심화 과제의 BasicUserService는 저장 처리를 UserRepository에 위임합니다.
- */
-public class FileUserService implements UserService {
+public class FileUserService {
 
     private final Path directory;
 
@@ -36,7 +30,6 @@ public class FileUserService implements UserService {
         }
     }
 
-    @Override
     public void create(User user) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null.");
@@ -55,7 +48,6 @@ public class FileUserService implements UserService {
         write(file, user);
     }
 
-    @Override
     public User findById(UUID id) {
         Path file = fileFor(id);
         if (!Files.exists(file)) {
@@ -64,7 +56,6 @@ public class FileUserService implements UserService {
         return read(file);
     }
 
-    @Override
     public List<User> findAll() {
         List<User> users = new ArrayList<>();
 
@@ -78,7 +69,6 @@ public class FileUserService implements UserService {
         return List.copyOf(users);
     }
 
-    @Override
     public void update(UUID id, User user) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null.");
@@ -90,11 +80,15 @@ public class FileUserService implements UserService {
             throw new IllegalArgumentException("Email is already in use: " + user.getEmail());
         }
 
-        existingUser.update(user.getUsername(), user.getEmail(), user.getPassword());
+        existingUser.update(
+                user.getUsername(),
+                user.getEmail(),
+                user.getPassword(),
+                existingUser.getProfileId()
+        );
         write(fileFor(id), existingUser);
     }
 
-    @Override
     public void delete(UUID id) {
         try {
             if (!Files.deleteIfExists(fileFor(id))) {

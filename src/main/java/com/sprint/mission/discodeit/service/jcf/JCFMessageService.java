@@ -37,7 +37,7 @@ public class JCFMessageService implements MessageService {
             throw new IllegalArgumentException("이미 등록된 ID입니다: " + message.getId());
         }
 
-        User user = userService.findById(message.getUserId());
+        userService.findById(message.getUserId());
         Channel channel = channelService.findById(message.getChannelId());
 
         data.put(message.getId(), message);
