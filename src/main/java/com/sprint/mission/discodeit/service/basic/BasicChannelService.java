@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.ChannelUpdateRequest;
 
 import com.sprint.mission.discodeit.dto.ChannelDto;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
@@ -33,6 +34,7 @@ public class BasicChannelService implements ChannelService {
     private final ReadStatusRepository readStatusRepository;
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
+    private final BinaryContentRepository binaryContentRepository;
 
     @Override
     public Channel createPublic(PublicChannelCreateRequest request) {
@@ -139,6 +141,11 @@ public class BasicChannelService implements ChannelService {
         for (Message message : messageRepository.findAll()) {
             if (message.getChannelId().equals(channel.getId())) {
                 messageRepository.deleteById(message.getId());
+
+                // 메시지에 연결된 첨부 콘텐츠도 함께 정리해 고아 파일을 남기지 않습니다.
+                for (UUID attachmentId : message.getAttachmentIds()) {
+                    binaryContentRepository.deleteById(attachmentId);
+                }
             }
         }
 

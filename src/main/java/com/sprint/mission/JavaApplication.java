@@ -85,7 +85,7 @@ public class JavaApplication {
                 ),
                 new BasicChannelService(
                         jcfChannelRepository, jcfReadStatusRepository, jcfMessageRepository,
-                        jcfUserRepository
+                        jcfUserRepository, jcfBinaryContentRepository
                 ),
                 new BasicMessageService(
                         jcfMessageRepository, jcfUserRepository, jcfChannelRepository,
@@ -121,7 +121,7 @@ public class JavaApplication {
                 ),
                 new BasicChannelService(
                         fileChannelRepository, fileReadStatusRepository, fileMessageRepository,
-                        fileUserRepository
+                        fileUserRepository, fileBinaryContentRepository
                 ),
                 new BasicMessageService(
                         fileMessageRepository, fileUserRepository, fileChannelRepository,
