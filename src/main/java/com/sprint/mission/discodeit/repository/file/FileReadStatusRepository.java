@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
@@ -20,6 +21,11 @@ import java.util.UUID;
  * @Repository가 있어서 Spring이 Bean으로 찾아 BasicChannelService에 주입할 수 있습니다.
  */
 @Repository
+@ConditionalOnProperty(
+        prefix = "discodeit.repository",
+        name = "type",
+        havingValue = "file"
+)
 public class FileReadStatusRepository implements ReadStatusRepository {
 
     private final Path directory;
