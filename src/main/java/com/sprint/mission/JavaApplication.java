@@ -29,8 +29,9 @@ import java.util.UUID;
 
 import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
-import com.sprint.mission.discodeit.repository.file.FileBinaryContentRepository;
-import com.sprint.mission.discodeit.repository.file.FileUserStatusRepository;
+import com.sprint.mission.discodeit.repository.jcf.JCFBinaryContentRepository;
+import com.sprint.mission.discodeit.repository.jcf.JCFReadStatusRepository;
+import com.sprint.mission.discodeit.repository.jcf.JCFUserStatusRepository;
 
 public class JavaApplication {
 
@@ -71,20 +72,14 @@ public class JavaApplication {
         UserRepository jcfUserRepository = new JCFUserRepository();
         ChannelRepository jcfChannelRepository = new JCFChannelRepository();
         MessageRepository jcfMessageRepository = new JCFMessageRepository();
-        BinaryContentRepository jcfBinaryContentRepository = new FileBinaryContentRepository(
-                Paths.get(System.getProperty("user.dir"), "data", "jcf-demo", "binary-contents")
-        );
-        ReadStatusRepository jcfReadStatusRepository = new FileReadStatusRepository(
-                Paths.get(
-                        System.getProperty("user.dir"), "data", "jcf-demo", "read-statuses"
-                )
-        );
+        BinaryContentRepository jcfBinaryContentRepository = new JCFBinaryContentRepository();
+        ReadStatusRepository jcfReadStatusRepository = new JCFReadStatusRepository();
 
         runScenario(
                 new BasicUserService(
                         jcfUserRepository,
-                        new FileBinaryContentRepository(),
-                        new FileUserStatusRepository()
+                        jcfBinaryContentRepository,
+                        new JCFUserStatusRepository()
                 ),
                 new BasicChannelService(
                         jcfChannelRepository, jcfReadStatusRepository, jcfMessageRepository
