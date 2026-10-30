@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
@@ -28,8 +30,11 @@ public class FileChannelRepository implements ChannelRepository {
 
     private final Path directory;
 
-    public FileChannelRepository() {
-        this(Paths.get(System.getProperty("user.dir"), "data", "channels"));
+    @Autowired
+    public FileChannelRepository(
+            @Value("${discodeit.repository.file-directory}") String baseDirectory
+    ) {
+        this(Paths.get(baseDirectory).resolve("channels"));
     }
 
     public FileChannelRepository(Path directory) {

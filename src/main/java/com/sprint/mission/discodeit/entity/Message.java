@@ -10,19 +10,19 @@ public class Message extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
     private String content;
-    private final UUID userId;
+    private final UUID authorId;
     private final UUID channelId;
 
     private final List<UUID> attachmentIds;
 
-    public Message(String content, UUID userId, UUID channelId) {
-        this(content, userId, channelId, List.of());
+    public Message(String content, UUID authorId, UUID channelId) {
+        this(content, authorId, channelId, List.of());
     }
 
-    public Message(String content, UUID userId, UUID channelId, List<UUID> attachmentIds) {
+    public Message(String content, UUID authorId, UUID channelId, List<UUID> attachmentIds) {
         super();
         this.content = content;
-        this.userId = userId;
+        this.authorId = authorId;
         this.channelId = channelId;
         this.attachmentIds = List.copyOf(attachmentIds);
     }

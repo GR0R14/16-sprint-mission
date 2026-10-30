@@ -450,6 +450,31 @@ public class DiscodeitApplication {
 			);
 			publicChannelId = publicChannel.getId();
 			UUID verifiedPublicChannelId = publicChannelId;
+
+			System.out.println("\n=== ChannelService 검증: PRIVATE 참여자 검증 ===");
+			int channelCountBeforeInvalidRequest = channelRepository.findAll().size();
+			int readStatusCountBeforeInvalidRequest = readStatusRepository.findAll().size();
+			expectIllegalArgument(
+					() -> channelService.createPrivate(new PrivateChannelCreateRequest(
+							Arrays.asList(firstUser.id(), null)
+					)),
+					"null 참여자 ID가 포함된 PRIVATE 채널 생성 거부"
+			);
+			check(channelRepository.findAll().size() == channelCountBeforeInvalidRequest
+					&& readStatusRepository.findAll().size() == readStatusCountBeforeInvalidRequest,
+					"null 참여자 요청은 채널과 ReadStatus를 저장하지 않음");
+
+			UUID missingParticipantId = UUID.randomUUID();
+			expectIllegalArgument(
+					() -> channelService.createPrivate(new PrivateChannelCreateRequest(
+							Arrays.asList(firstUser.id(), missingParticipantId)
+					)),
+					"존재하지 않는 사용자 ID가 포함된 PRIVATE 채널 생성 거부"
+			);
+			check(channelRepository.findAll().size() == channelCountBeforeInvalidRequest
+					&& readStatusRepository.findAll().size() == readStatusCountBeforeInvalidRequest,
+					"존재하지 않는 사용자 요청은 채널과 ReadStatus를 저장하지 않음");
+
 			Channel privateChannel = channelService.createPrivate(
 					new PrivateChannelCreateRequest(
 							Arrays.asList(firstUser.id(), secondUser.id())

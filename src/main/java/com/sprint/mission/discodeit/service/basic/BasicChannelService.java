@@ -10,6 +10,7 @@ import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
+import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class BasicChannelService implements ChannelService {
     private final ChannelRepository channelRepository;
     private final ReadStatusRepository readStatusRepository;
     private final MessageRepository messageRepository;
+    private final UserRepository userRepository;
 
     @Override
     public Channel createPublic(PublicChannelCreateRequest request) {
@@ -54,6 +56,18 @@ public class BasicChannelService implements ChannelService {
                 || request.participantUserIds() == null
                 || request.participantUserIds().isEmpty()) {
             throw new IllegalArgumentException("비공개 채널에는 참여자가 필요합니다.");
+        }
+
+        // 채널을 저장하기 전에 모든 참여자 ID가 null이 아니고 실제 사용자로 존재하는지 확인합니다.
+        for (UUID participantUserId : request.participantUserIds()) {
+            if (participantUserId == null) {
+                throw new IllegalArgumentException("참여자 ID는 null일 수 없습니다.");
+            }
+            if (!userRepository.existsById(participantUserId)) {
+                throw new IllegalArgumentException(
+                        "참여자를 찾을 수 없습니다: " + participantUserId
+                );
+            }
         }
 
         Channel channel = new Channel(ChannelType.PRIVATE, null, null);

@@ -84,7 +84,8 @@ public class JavaApplication {
                         new JCFUserStatusRepository()
                 ),
                 new BasicChannelService(
-                        jcfChannelRepository, jcfReadStatusRepository, jcfMessageRepository
+                        jcfChannelRepository, jcfReadStatusRepository, jcfMessageRepository,
+                        jcfUserRepository
                 ),
                 new BasicMessageService(
                         jcfMessageRepository, jcfUserRepository, jcfChannelRepository,
@@ -119,7 +120,8 @@ public class JavaApplication {
                         new FileUserStatusRepository(directory.resolve("user-statuses"))
                 ),
                 new BasicChannelService(
-                        fileChannelRepository, fileReadStatusRepository, fileMessageRepository
+                        fileChannelRepository, fileReadStatusRepository, fileMessageRepository,
+                        fileUserRepository
                 ),
                 new BasicMessageService(
                         fileMessageRepository, fileUserRepository, fileChannelRepository,

@@ -5,16 +5,14 @@ import com.sprint.mission.discodeit.dto.AuthUserDto;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.AuthService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class BasicAuthService implements AuthService {
 
     private final UserRepository userRepository;
-
-    public BasicAuthService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     @Override
     public AuthUserDto login(AuthLoginRequest request) {

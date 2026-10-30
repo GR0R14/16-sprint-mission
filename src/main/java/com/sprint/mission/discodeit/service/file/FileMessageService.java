@@ -64,7 +64,7 @@ public class FileMessageService {
             throw new IllegalArgumentException("이미 등록된 ID입니다: " + message.getId());
         }
 
-        userService.findById(message.getUserId());
+        userService.findById(message.getAuthorId());
         channelService.findById(message.getChannelId());
 
         write(file, message);

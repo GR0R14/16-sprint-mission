@@ -10,6 +10,7 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -18,28 +19,13 @@ import java.util.UUID;
 
 /** 메시지 규칙과 참조 검증을 처리하며 필요한 저장소 인터페이스에 저장을 위임합니다. */
 @Service
+@RequiredArgsConstructor
 public class BasicMessageService implements MessageService {
 
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final ChannelRepository channelRepository;
     private final BinaryContentRepository binaryContentRepository;
-
-    public BasicMessageService(
-            MessageRepository messageRepository,
-            UserRepository userRepository,
-            ChannelRepository channelRepository,
-            BinaryContentRepository binaryContentRepository
-    ) {
-        if (messageRepository == null || userRepository == null || channelRepository == null
-                || binaryContentRepository == null) {
-            throw new IllegalArgumentException("Repository dependencies cannot be null.");
-        }
-        this.messageRepository = messageRepository;
-        this.userRepository = userRepository;
-        this.channelRepository = channelRepository;
-        this.binaryContentRepository = binaryContentRepository;
-    }
 
     @Override
     public Message create(MessageCreateRequest request) {
