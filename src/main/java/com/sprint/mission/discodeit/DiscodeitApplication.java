@@ -1,6 +1,20 @@
 package com.sprint.mission.discodeit;
 
-import com.sprint.mission.discodeit.dto.*;
+import com.sprint.mission.discodeit.dto.AuthLoginRequest;
+import com.sprint.mission.discodeit.dto.AuthUserDto;
+import com.sprint.mission.discodeit.dto.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.ChannelUpdateRequest;
+import com.sprint.mission.discodeit.dto.MessageCreateRequest;
+import com.sprint.mission.discodeit.dto.MessageUpdateRequest;
+import com.sprint.mission.discodeit.dto.PrivateChannelCreateRequest;
+import com.sprint.mission.discodeit.dto.PublicChannelCreateRequest;
+import com.sprint.mission.discodeit.dto.ReadStatusCreateRequest;
+import com.sprint.mission.discodeit.dto.ReadStatusUpdateRequest;
+import com.sprint.mission.discodeit.dto.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.dto.UserStatusCreateRequest;
+import com.sprint.mission.discodeit.dto.UserStatusUpdateRequest;
+import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
@@ -11,8 +25,8 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.ChannelService;
@@ -24,58 +38,94 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.time.Instant;
 
 @SpringBootApplication
 public class DiscodeitApplication {
 
-	public static void main(String[] args) {
-		ConfigurableApplicationContext context =
-				SpringApplication.run(DiscodeitApplication.class, args);
-		// 서비스 초기화
-		UserService userService = context.getBean(UserService.class);
-		ChannelService channelService = context.getBean(ChannelService.class);
-		MessageService messageService= context.getBean(MessageService.class);
-		ReadStatusService readStatusService = context.getBean(ReadStatusService.class);
-		UserStatusService userStatusService = context.getBean(UserStatusService.class);
-		BinaryContentService binaryContentService = context.getBean(BinaryContentService.class);
-		BinaryContentRepository binaryContentRepository =
-				context.getBean(BinaryContentRepository.class);
-		ChannelRepository channelRepository = context.getBean(ChannelRepository.class);
-		MessageRepository messageRepository = context.getBean(MessageRepository.class);
-		ReadStatusRepository readStatusRepository = context.getBean(ReadStatusRepository.class);
-		UserStatusRepository userStatusRepository =
-				context.getBean(UserStatusRepository.class);
-		UserRepository userRepository = context.getBean(UserRepository.class);
+    public static void main(String[] args) {
+        ConfigurableApplicationContext context =
+                SpringApplication.run(DiscodeitApplication.class, args);
+        runVerificationScenarios(context);
+    }
 
-		AuthService authService = context.getBean(AuthService.class);
+    /** 전체 검증을 독립 서비스, 사용자 인증, 채널과 메시지 순서로 실행합니다. */
+    private static void runVerificationScenarios(
+            ConfigurableApplicationContext context
+    ) {
+        verifyIndependentServices(context);
 
-		verifyBinaryContentService(binaryContentService, binaryContentRepository);
-		verifyUserService(userService, binaryContentRepository, userStatusRepository);
-		verifyUserStatusService(userStatusService, userRepository, userStatusRepository);
+        UserDto user = verifyUserAndAuth(context);
+        verifyChannelAndMessageServices(context, user);
+    }
 
-		//SetUp
-		UserDto user = setupUser(userService);
-		verifyAuthService(authService, user);
+    private static void verifyIndependentServices(
+            ConfigurableApplicationContext context
+    ) {
+        verifyBinaryContentService(
+                context.getBean(BinaryContentService.class),
+                context.getBean(BinaryContentRepository.class)
+        );
+        verifyUserStatusService(
+                context.getBean(UserStatusService.class),
+                context.getBean(UserRepository.class),
+                context.getBean(UserStatusRepository.class)
+        );
+    }
 
-		Channel channel = setupChannel(channelService);
-		verifyReadStatusService(readStatusService, user, channel, readStatusRepository);
-		verifyChannelService(
-				channelService,
-				userService,
-				user,
-				channelRepository,
-				messageRepository,
-				readStatusRepository
-		);
+    private static UserDto verifyUserAndAuth(
+            ConfigurableApplicationContext context
+    ) {
+        UserService userService = context.getBean(UserService.class);
+        BinaryContentRepository binaryContentRepository =
+                context.getBean(BinaryContentRepository.class);
+        UserStatusRepository userStatusRepository =
+                context.getBean(UserStatusRepository.class);
 
-		//Test
-		verifyMessageService(messageService, user, channel, channelService, binaryContentRepository);
-		messageCreateTest(messageService, channel, user);
-	}
+        verifyUserService(userService, binaryContentRepository, userStatusRepository);
+
+        UserDto user = setupUser(userService);
+        verifyAuthService(context.getBean(AuthService.class), user);
+        return user;
+    }
+
+    private static void verifyChannelAndMessageServices(
+            ConfigurableApplicationContext context,
+            UserDto user
+    ) {
+        ChannelService channelService = context.getBean(ChannelService.class);
+        ReadStatusRepository readStatusRepository =
+                context.getBean(ReadStatusRepository.class);
+        Channel channel = setupChannel(channelService);
+
+        verifyReadStatusService(
+                context.getBean(ReadStatusService.class),
+                user,
+                channel,
+                readStatusRepository
+        );
+        verifyChannelService(
+                channelService,
+                context.getBean(UserService.class),
+                user,
+                context.getBean(ChannelRepository.class),
+                context.getBean(MessageRepository.class),
+                readStatusRepository
+        );
+
+        MessageService messageService = context.getBean(MessageService.class);
+        verifyMessageService(
+                messageService,
+                user,
+                channel,
+                channelService,
+                context.getBean(BinaryContentRepository.class)
+        );
+        messageCreateTest(messageService, channel, user);
+    }
 
 	static UserDto setupUser(UserService userService) {
 		String runId = UUID.randomUUID().toString().substring(0, 8);
