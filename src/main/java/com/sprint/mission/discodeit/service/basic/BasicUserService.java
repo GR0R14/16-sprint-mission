@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import com.sprint.mission.discodeit.dto.BinaryContentCreateRequest;
@@ -21,22 +22,13 @@ import java.util.UUID;
 
 /** 사용자 업무 규칙을 처리하며, 실제 저장 방법은 UserRepository 구현체에 맡깁니다. */
 @Service
+@RequiredArgsConstructor
 public class BasicUserService implements UserService {
 
     private final UserRepository userRepository;
     private final BinaryContentRepository binaryContentRepository;
     private final UserStatusRepository userStatusRepository;
 
-
-    public BasicUserService(
-            UserRepository userRepository,
-            BinaryContentRepository binaryContentRepository,
-            UserStatusRepository userStatusRepository
-    ) {
-        this.userRepository = userRepository;
-        this.binaryContentRepository = binaryContentRepository;
-        this.userStatusRepository = userStatusRepository;
-    }
 
     @Override
     public UserDto create(UserCreateRequest request) {
@@ -139,13 +131,10 @@ public class BasicUserService implements UserService {
         }
 
         UUID profileId = user.getProfileId();
+        UUID oldProfileId = profileId;
         BinaryContentCreateRequest profileRequest = request.profileImage();
 
         if (profileRequest != null) {
-            if (profileId != null) {
-                binaryContentRepository.deleteById(profileId);
-            }
-
             BinaryContent profile = new BinaryContent(
                     profileRequest.fileName(),
                     profileRequest.contentType(),
@@ -157,6 +146,10 @@ public class BasicUserService implements UserService {
 
         user.update(request.username(), request.email(), request.password(), profileId);
         userRepository.save(user);
+
+        if (profileRequest != null && oldProfileId != null) {
+            binaryContentRepository.deleteById(oldProfileId);
+        }
 
         return toDto(user);
     }
