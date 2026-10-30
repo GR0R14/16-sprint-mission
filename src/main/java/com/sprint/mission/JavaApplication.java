@@ -3,6 +3,8 @@ package com.sprint.mission;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.dto.PublicChannelCreateRequest;
+import com.sprint.mission.discodeit.dto.MessageCreateRequest;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -59,7 +61,7 @@ public class JavaApplication {
             UserDto author
     ) {
         Message message = messageService.create(
-                "안녕하세요.", channel.getId(), author.id()
+                new MessageCreateRequest("안녕하세요.", channel.getId(), author.id(), null)
         );
         System.out.println("메시지 생성: " + message.getId());
     }
@@ -69,6 +71,9 @@ public class JavaApplication {
         UserRepository jcfUserRepository = new JCFUserRepository();
         ChannelRepository jcfChannelRepository = new JCFChannelRepository();
         MessageRepository jcfMessageRepository = new JCFMessageRepository();
+        BinaryContentRepository jcfBinaryContentRepository = new FileBinaryContentRepository(
+                Paths.get(System.getProperty("user.dir"), "data", "jcf-demo", "binary-contents")
+        );
         ReadStatusRepository jcfReadStatusRepository = new FileReadStatusRepository(
                 Paths.get(
                         System.getProperty("user.dir"), "data", "jcf-demo", "read-statuses"
@@ -85,7 +90,8 @@ public class JavaApplication {
                         jcfChannelRepository, jcfReadStatusRepository, jcfMessageRepository
                 ),
                 new BasicMessageService(
-                        jcfMessageRepository, jcfUserRepository, jcfChannelRepository
+                        jcfMessageRepository, jcfUserRepository, jcfChannelRepository,
+                        jcfBinaryContentRepository
                 )
         );
 
@@ -102,6 +108,9 @@ public class JavaApplication {
         MessageRepository fileMessageRepository = new FileMessageRepository(
                 directory.resolve("messages")
         );
+        BinaryContentRepository fileBinaryContentRepository = new FileBinaryContentRepository(
+                directory.resolve("binary-contents")
+        );
         ReadStatusRepository fileReadStatusRepository = new FileReadStatusRepository(
                 directory.resolve("read-statuses")
         );
@@ -116,7 +125,8 @@ public class JavaApplication {
                         fileChannelRepository, fileReadStatusRepository, fileMessageRepository
                 ),
                 new BasicMessageService(
-                        fileMessageRepository, fileUserRepository, fileChannelRepository
+                        fileMessageRepository, fileUserRepository, fileChannelRepository,
+                        fileBinaryContentRepository
                 )
         );
     }
@@ -127,14 +137,14 @@ public class JavaApplication {
             MessageService messageService
     ) {
         System.out.println("실행 전 사용자 수: " + userService.findAll().size());
-        System.out.println("실행 전 메시지 수: " + messageService.findAll().size());
-
         UserDto user = setupUser(userService);
         System.out.println(
                 "채널 생성 전 사용자가 볼 수 있는 채널 수: "
                         + channelService.findAllByUserId(user.id()).size()
         );
         Channel channel = setupChannel(channelService);
+        System.out.println("실행 전 채널 메시지 수: "
+                + messageService.findAllByChannelId(channel.getId()).size());
         messageCreateTest(messageService, channel, user);
 
         System.out.println("실행 후 사용자 수: " + userService.findAll().size());
@@ -142,6 +152,7 @@ public class JavaApplication {
                 "실행 후 사용자가 볼 수 있는 채널 수: "
                         + channelService.findAllByUserId(user.id()).size()
         );
-        System.out.println("실행 후 메시지 수: " + messageService.findAll().size());
+        System.out.println("실행 후 채널 메시지 수: "
+                + messageService.findAllByChannelId(channel.getId()).size());
     }
 }

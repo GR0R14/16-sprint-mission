@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.service.file;
 
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.service.ChannelService;
-import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
 
 import java.io.IOException;
@@ -20,7 +19,7 @@ import java.util.UUID;
  * 메시지 업무 규칙과 File IO 저장을 직접 수행합니다.
  * 심화 과제의 BasicMessageService는 같은 저장 작업을 MessageRepository에 위임합니다.
  */
-public class FileMessageService implements MessageService {
+public class FileMessageService {
 
     private static final String EXTENSION = ".ser";
 
@@ -55,7 +54,6 @@ public class FileMessageService implements MessageService {
         }
     }
 
-    @Override
     public void create(Message message) {
         if (message == null) {
             throw new IllegalArgumentException("Message cannot be null.");
@@ -72,7 +70,6 @@ public class FileMessageService implements MessageService {
         write(file, message);
     }
 
-    @Override
     public Message findById(UUID id) {
         Path file = fileFor(id);
         if (!Files.exists(file)) {
@@ -81,7 +78,6 @@ public class FileMessageService implements MessageService {
         return read(file);
     }
 
-    @Override
     public List<Message> findAll() {
         List<Message> messages = new ArrayList<>();
         try (var files = Files.list(directory)) {
@@ -93,14 +89,12 @@ public class FileMessageService implements MessageService {
         return List.copyOf(messages);
     }
 
-    @Override
     public void update(UUID id, String content) {
         Message existingMessage = findById(id);
         existingMessage.update(content);
         write(fileFor(id), existingMessage);
     }
 
-    @Override
     public void delete(UUID id) {
         try {
             if (!Files.deleteIfExists(fileFor(id))) {

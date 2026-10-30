@@ -18,6 +18,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @SpringBootApplication
@@ -44,7 +45,6 @@ public class DiscodeitApplication {
 
 		//SetUp
 		UserDto user = setupUser(userService);
-
 		verifyAuthService(authService, user);
 
 		Channel channel = setupChannel(channelService);
@@ -58,6 +58,7 @@ public class DiscodeitApplication {
 		);
 
 		//Test
+		verifyMessageService(messageService, user, channel, channelService, binaryContentRepository);
 		messageCreateTest(messageService, channel, user);
 	}
 
@@ -88,9 +89,99 @@ public class DiscodeitApplication {
 			UserDto author
 	) {
 		Message message = messageService.create(
-				"안녕하세요.", channel.getId(), author.id()
+				new MessageCreateRequest("안녕하세요.", channel.getId(), author.id(), null)
 		);
 		System.out.println("메시지 생성: " + message.getId());
+	}
+
+	/** 첨부파일 생성, 채널별 조회, 수정, 삭제의 동작을 단계별로 확인합니다. */
+	private static void verifyMessageService(
+			MessageService messageService,
+			UserDto author,
+			Channel channel,
+			ChannelService channelService,
+			BinaryContentRepository binaryContentRepository
+	) {
+		String runId = UUID.randomUUID().toString().substring(0, 8);
+		Channel otherChannel = channelService.createPublic(
+				new PublicChannelCreateRequest("메시지검증-" + runId, "채널별 조회 검증")
+		);
+		UUID attachedMessageId = null;
+		UUID plainMessageId = null;
+
+		try {
+			System.out.println("\n=== MessageService 검증: 첨부파일 선택 등록 ===");
+			Message attachedMessage = messageService.create(new MessageCreateRequest(
+					"첨부파일 두 개가 있는 메시지",
+					channel.getId(),
+					author.id(),
+					Arrays.asList(
+							new BinaryContentCreateRequest("first.txt", "text/plain", new byte[]{1, 2}),
+							new BinaryContentCreateRequest("second.png", "image/png", new byte[]{3, 4})
+					)
+			));
+			attachedMessageId = attachedMessage.getId();
+			UUID verifiedAttachedMessageId = attachedMessageId;
+			check(attachedMessage.getAttachmentIds().size() == 2,
+					"메시지에 여러 첨부파일 ID 연결");
+			check(attachedMessage.getAttachmentIds().stream()
+					.allMatch(id -> binaryContentRepository.findById(id).isPresent()),
+					"첨부파일 데이터 저장");
+
+			Message plainMessage = messageService.create(new MessageCreateRequest(
+					"첨부파일 없는 메시지",
+					otherChannel.getId(),
+					author.id(),
+					null
+			));
+			plainMessageId = plainMessage.getId();
+			UUID verifiedPlainMessageId = plainMessageId;
+			check(plainMessage.getAttachmentIds().isEmpty(), "첨부파일 없이 메시지 생성");
+
+			System.out.println("\n=== MessageService 검증: 채널별 조회 ===");
+			List<Message> selectedChannelMessages =
+					messageService.findAllByChannelId(channel.getId());
+			check(selectedChannelMessages.stream()
+					.anyMatch(message -> message.getId().equals(verifiedAttachedMessageId)),
+					"지정 채널의 메시지 조회");
+			check(selectedChannelMessages.stream()
+					.noneMatch(message -> message.getId().equals(verifiedPlainMessageId)),
+					"다른 채널의 메시지는 조회 결과에서 제외");
+
+			System.out.println("\n=== MessageService 검증: 메시지 수정 ===");
+			messageService.update(new MessageUpdateRequest(attachedMessageId, "수정된 메시지 내용"));
+			check(messageService.findById(attachedMessageId).getContent().equals("수정된 메시지 내용"),
+					"요청 DTO의 내용으로 메시지 수정");
+
+			System.out.println("\n=== MessageService 검증: 메시지와 첨부파일 삭제 ===");
+			List<UUID> attachmentIds = attachedMessage.getAttachmentIds();
+			messageService.delete(attachedMessageId);
+			attachedMessageId = null;
+			check(attachmentIds.stream()
+					.allMatch(id -> binaryContentRepository.findById(id).isEmpty()),
+					"메시지 삭제 시 연결된 첨부파일도 삭제");
+			check(messageService.findAllByChannelId(channel.getId()).stream()
+					.noneMatch(message -> message.getId().equals(attachedMessage.getId())),
+					"삭제된 메시지는 채널 조회에서 제외");
+			messageService.delete(plainMessageId);
+			plainMessageId = null;
+		} finally {
+			if (attachedMessageId != null) {
+				cleanupMessage(messageService, attachedMessageId);
+			}
+			if (plainMessageId != null) {
+				cleanupMessage(messageService, plainMessageId);
+			}
+			channelService.delete(otherChannel.getId());
+		}
+	}
+
+	private static void cleanupMessage(MessageService messageService, UUID messageId) {
+		try {
+			messageService.delete(messageId);
+		} catch (IllegalArgumentException ignored) {
+			// 검증 도중 이미 삭제된 메시지는 다시 정리할 필요가 없습니다.
+		}
 	}
 
 	/** 채널 생성, 조회, 수정, 삭제의 고도화 요구사항을 기능별로 확인합니다. */
