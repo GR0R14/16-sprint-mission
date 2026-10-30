@@ -4,15 +4,22 @@ import com.sprint.mission.discodeit.dto.*;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
+import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.AuthService;
+import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.service.ReadStatusService;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.service.UserStatusService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -20,6 +27,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.time.Instant;
 
 @SpringBootApplication
 public class DiscodeitApplication {
@@ -31,6 +39,9 @@ public class DiscodeitApplication {
 		UserService userService = context.getBean(UserService.class);
 		ChannelService channelService = context.getBean(ChannelService.class);
 		MessageService messageService= context.getBean(MessageService.class);
+		ReadStatusService readStatusService = context.getBean(ReadStatusService.class);
+		UserStatusService userStatusService = context.getBean(UserStatusService.class);
+		BinaryContentService binaryContentService = context.getBean(BinaryContentService.class);
 		BinaryContentRepository binaryContentRepository =
 				context.getBean(BinaryContentRepository.class);
 		ChannelRepository channelRepository = context.getBean(ChannelRepository.class);
@@ -38,16 +49,20 @@ public class DiscodeitApplication {
 		ReadStatusRepository readStatusRepository = context.getBean(ReadStatusRepository.class);
 		UserStatusRepository userStatusRepository =
 				context.getBean(UserStatusRepository.class);
+		UserRepository userRepository = context.getBean(UserRepository.class);
 
 		AuthService authService = context.getBean(AuthService.class);
 
+		verifyBinaryContentService(binaryContentService, binaryContentRepository);
 		verifyUserService(userService, binaryContentRepository, userStatusRepository);
+		verifyUserStatusService(userStatusService, userRepository, userStatusRepository);
 
 		//SetUp
 		UserDto user = setupUser(userService);
 		verifyAuthService(authService, user);
 
 		Channel channel = setupChannel(channelService);
+		verifyReadStatusService(readStatusService, user, channel, readStatusRepository);
 		verifyChannelService(
 				channelService,
 				userService,
@@ -81,6 +96,184 @@ public class DiscodeitApplication {
 		return channelService.createPublic(
 				new PublicChannelCreateRequest("공지", "공지 채널입니다.")
 		);
+	}
+
+	/** 바이너리 콘텐츠 생성, ID 조회, 여러 ID 조회, 삭제를 확인합니다. */
+	private static void verifyBinaryContentService(
+			BinaryContentService binaryContentService,
+			BinaryContentRepository binaryContentRepository
+	) {
+		UUID createdContentId = null;
+		try {
+			System.out.println("\n=== BinaryContentService 검증: 생성과 ID 조회 ===");
+			byte[] expectedData = new byte[]{10, 20, 30};
+			var created = binaryContentService.create(new BinaryContentCreateRequest(
+					"binary-check.bin", "application/octet-stream", expectedData
+			));
+			createdContentId = created.getId();
+			UUID verifiedContentId = createdContentId;
+			check(created.getFileName().equals("binary-check.bin")
+					&& created.getContentType().equals("application/octet-stream")
+					&& Arrays.equals(created.getData(), expectedData),
+					"DTO 정보로 바이너리 콘텐츠 생성");
+			check(binaryContentService.findById(verifiedContentId).getId()
+					.equals(verifiedContentId), "ID로 바이너리 콘텐츠 조회");
+
+			System.out.println("\n=== BinaryContentService 검증: ID 목록 조회 ===");
+			UUID missingId = UUID.randomUUID();
+			List<UUID> requestedIds = Arrays.asList(verifiedContentId, missingId);
+			List<UUID> foundIds = binaryContentService.findAllByIdIn(requestedIds).stream()
+					.map(content -> content.getId())
+					.toList();
+			check(foundIds.size() == 1 && foundIds.contains(verifiedContentId),
+					"ID 목록 중 저장된 콘텐츠만 조회");
+
+			System.out.println("\n=== BinaryContentService 검증: 삭제 ===");
+			binaryContentService.delete(verifiedContentId);
+			createdContentId = null;
+			check(binaryContentRepository.findById(verifiedContentId).isEmpty(),
+					"ID로 바이너리 콘텐츠 삭제");
+		} finally {
+			if (createdContentId != null) {
+				binaryContentRepository.deleteById(createdContentId);
+			}
+		}
+	}
+
+	/** 사용자 상태의 생성, 조회, 갱신, 삭제 규칙을 확인합니다. */
+	private static void verifyUserStatusService(
+			UserStatusService userStatusService,
+			UserRepository userRepository,
+			UserStatusRepository userStatusRepository
+	) {
+		String runId = UUID.randomUUID().toString().substring(0, 8);
+		User testUser = new User(
+				"status-check-" + runId,
+				"status-check-" + runId + "@codeit.com",
+				"password"
+		);
+		userRepository.save(testUser);
+		UUID createdStatusId = null;
+
+		try {
+			System.out.println("\n=== UserStatusService 검증: 생성과 중복 방지 ===");
+			Instant initialActiveAt = Instant.now().minusSeconds(60);
+			UserStatusCreateRequest createRequest = new UserStatusCreateRequest(
+					testUser.getId(), initialActiveAt
+			);
+			UserStatus created = userStatusService.create(createRequest);
+			createdStatusId = created.getId();
+			UUID verifiedStatusId = createdStatusId;
+			check(created.getUserId().equals(testUser.getId())
+					&& created.getLastActiveAt().equals(initialActiveAt),
+					"사용자 ID와 접속 시각으로 UserStatus 생성");
+			expectIllegalArgument(
+					() -> userStatusService.create(createRequest),
+					"같은 사용자의 중복 UserStatus 생성 거부"
+			);
+			UUID missingUserId = UUID.randomUUID();
+			expectIllegalArgument(
+					() -> userStatusService.create(new UserStatusCreateRequest(
+							missingUserId, Instant.now())),
+					"존재하지 않는 사용자 상태 생성 거부"
+			);
+
+			System.out.println("\n=== UserStatusService 검증: ID 및 전체 조회 ===");
+			check(userStatusService.findById(verifiedStatusId).getId().equals(verifiedStatusId),
+					"ID로 UserStatus 조회");
+			check(userStatusService.findAll().stream()
+					.anyMatch(item -> item.getId().equals(verifiedStatusId)),
+					"모든 UserStatus 조회 결과에 생성한 상태 포함");
+
+			System.out.println("\n=== UserStatusService 검증: ID 및 사용자 ID로 갱신 ===");
+			Instant updatedByIdAt = Instant.now().minusSeconds(20);
+			userStatusService.update(new UserStatusUpdateRequest(
+					verifiedStatusId, updatedByIdAt
+			));
+			check(userStatusService.findById(verifiedStatusId).getLastActiveAt()
+					.equals(updatedByIdAt), "ID와 DTO로 마지막 접속 시각 수정");
+
+			Instant updatedByUserIdAt = Instant.now();
+			userStatusService.updateByUserId(testUser.getId(), updatedByUserIdAt);
+			check(userStatusService.findById(verifiedStatusId).getLastActiveAt()
+					.equals(updatedByUserIdAt), "userId로 해당 사용자의 상태 수정");
+
+			System.out.println("\n=== UserStatusService 검증: 삭제 ===");
+			userStatusService.delete(verifiedStatusId);
+			createdStatusId = null;
+			check(userStatusRepository.findById(verifiedStatusId).isEmpty(),
+					"ID로 UserStatus 삭제");
+		} finally {
+			if (createdStatusId != null) {
+				userStatusRepository.deleteById(createdStatusId);
+			}
+			userRepository.deleteById(testUser.getId());
+		}
+	}
+
+	/** 읽음 상태의 생성, 중복 방지, 조회, 수정, 삭제를 확인합니다. */
+	private static void verifyReadStatusService(
+			ReadStatusService readStatusService,
+			UserDto user,
+			Channel channel,
+			ReadStatusRepository readStatusRepository
+	) {
+		UUID createdReadStatusId = null;
+		try {
+			System.out.println("\n=== ReadStatusService 검증: 생성과 관계 확인 ===");
+			Instant initialReadAt = Instant.now().minusSeconds(30);
+			ReadStatusCreateRequest createRequest = new ReadStatusCreateRequest(
+					user.id(), channel.getId(), initialReadAt
+			);
+			ReadStatus created = readStatusService.create(createRequest);
+			createdReadStatusId = created.getId();
+			UUID verifiedReadStatusId = createdReadStatusId;
+			check(created.getUserId().equals(user.id())
+					&& created.getChannelId().equals(channel.getId())
+					&& created.getLastReadAt().equals(initialReadAt),
+					"사용자·채널·읽은 시각으로 ReadStatus 생성");
+			expectIllegalArgument(
+					() -> readStatusService.create(createRequest),
+					"같은 사용자와 채널의 중복 ReadStatus 생성 거부"
+			);
+
+			UUID missingUserId = UUID.randomUUID();
+			expectIllegalArgument(
+					() -> readStatusService.create(new ReadStatusCreateRequest(
+							missingUserId, channel.getId(), Instant.now())),
+					"존재하지 않는 사용자와 연결된 생성 거부"
+			);
+			UUID missingChannelId = UUID.randomUUID();
+			expectIllegalArgument(
+					() -> readStatusService.create(new ReadStatusCreateRequest(
+							user.id(), missingChannelId, Instant.now())),
+					"존재하지 않는 채널과 연결된 생성 거부"
+			);
+
+			System.out.println("\n=== ReadStatusService 검증: ID 및 사용자별 조회 ===");
+			check(readStatusService.findById(verifiedReadStatusId).getId()
+					.equals(verifiedReadStatusId), "ID로 ReadStatus 조회");
+			check(readStatusService.findAllByUserId(user.id()).stream()
+					.anyMatch(item -> item.getId().equals(verifiedReadStatusId)),
+					"사용자 ID로 ReadStatus 목록 조회");
+
+			System.out.println("\n=== ReadStatusService 검증: 수정과 삭제 ===");
+			Instant updatedReadAt = Instant.now();
+			readStatusService.update(new ReadStatusUpdateRequest(
+					verifiedReadStatusId, updatedReadAt
+			));
+			check(readStatusService.findById(verifiedReadStatusId).getLastReadAt()
+					.equals(updatedReadAt), "마지막 읽은 시각 수정");
+
+			readStatusService.delete(verifiedReadStatusId);
+			createdReadStatusId = null;
+			check(readStatusRepository.findById(verifiedReadStatusId).isEmpty(),
+					"ID로 ReadStatus 삭제");
+		} finally {
+			if (createdReadStatusId != null) {
+				readStatusRepository.deleteById(createdReadStatusId);
+			}
+		}
 	}
 
 	static void messageCreateTest(
