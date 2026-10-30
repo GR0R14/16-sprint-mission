@@ -1,21 +1,18 @@
 package com.sprint.mission.discodeit;
 
+import com.sprint.mission.discodeit.dto.*;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
+import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-
-import com.sprint.mission.discodeit.dto.BinaryContentCreateRequest;
-import com.sprint.mission.discodeit.dto.UserCreateRequest;
-import com.sprint.mission.discodeit.dto.UserDto;
-import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -35,11 +32,17 @@ public class DiscodeitApplication {
 		UserStatusRepository userStatusRepository =
 				context.getBean(UserStatusRepository.class);
 
+		AuthService authService = context.getBean(AuthService.class);
+
 		verifyUserService(userService, binaryContentRepository, userStatusRepository);
 
 		//SetUp
 		UserDto user = setupUser(userService);
+
+		verifyAuthService(authService, user);
+
 		Channel channel = setupChannel(channelService);
+
 		//Test
 		messageCreateTest(messageService, channel, user);
 	}
@@ -188,6 +191,31 @@ public class DiscodeitApplication {
 		}
 	}
 
+	private static void verifyAuthService(AuthService authService, UserDto user) {
+		AuthUserDto loggedInUser = authService.login(
+				new AuthLoginRequest(user.username(), "woody1234")
+		);
+
+		check(
+				loggedInUser.id().equals(user.id()),
+				"올바른 아이디와 비밀번호로 로그인"
+		);
+
+		expectIllegalArgument(
+				() -> authService.login(
+						new AuthLoginRequest("없는사용자", "woody1234")
+				),
+				"존재하지 않는 아이디로 로그인 실패"
+		);
+
+		expectIllegalArgument(
+				() -> authService.login(
+						new AuthLoginRequest(user.username(), "wrong-password")
+				),
+				"잘못된 비밀번호로 로그인 실패"
+		);
+	}
+
 	private static void check(boolean condition, String description) {
 		if (!condition) {
 			throw new IllegalStateException("검증 실패: " + description);
@@ -214,23 +242,5 @@ public class DiscodeitApplication {
 		} catch (IllegalArgumentException ignored) {
 			// 검증 과정에서 이미 삭제된 사용자는 정리할 필요가 없습니다.
 		}
-	}
-
-	private static void runScenario(
-			UserService userService,
-			ChannelService channelService,
-			MessageService messageService
-	) {
-		System.out.println("실행 전 사용자 수: " + userService.findAll().size());
-		System.out.println("실행 전 채널 수: " + channelService.findAll().size());
-		System.out.println("실행 전 메시지 수: " + messageService.findAll().size());
-
-		UserDto user = setupUser(userService);
-		Channel channel = setupChannel(channelService);
-		messageCreateTest(messageService, channel, user);
-
-		System.out.println("실행 후 사용자 수: " + userService.findAll().size());
-		System.out.println("실행 후 채널 수: " + channelService.findAll().size());
-		System.out.println("실행 후 메시지 수: " + messageService.findAll().size());
 	}
 }
